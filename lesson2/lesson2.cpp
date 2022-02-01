@@ -147,9 +147,15 @@ unsigned short GetAnswer(string question, unsigned short maxVariantAnswer)
     while (true)
     {
         cout << question; // "Item Choice (1 - CROSS, 2 - ZERO): ";
+        
+        std::cin.ignore(32767, '\n');
         cin >> choice;
         if (choice > maxVariantAnswer || choice == 0)
         {
+            if (cin.fail())
+            {
+                std::cin.clear();
+            }
             cout << "Unknown answer, repeat input please.\n";
         }
         else
@@ -329,8 +335,8 @@ void Task5()
 
 int main()
 {
-    Task1();
-    Task3();
+    //Task1();
+    //Task3();
     Task4();
-    Task5();
+    //Task5();
 }
