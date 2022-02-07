@@ -1,43 +1,116 @@
 #include "Render.h"
 
-Render::Render(GameData* data) : _data(data)
+Render::Render( Perspective* const p, GameData* const data) : _data(data), _p(p), _frame(nullptr)
 {
-	initscr(); // Переход в curses-режим
+	initFrame();
+	initscr();
 	keypad(stdscr, true);
 	
 	auto win = stdscr;
 	win->_sync = true;
-	//delay_output(100);
 }
 
 int Render::Rendering()
 {
-	int H = _data->FrameRows();
-	int W = _data->FrameCols();
-
+	//system("cls");
 	clear();
 
-	char** frame = _data->Frame();
+	auto gameArea = _p->Game->ClientPart();
+	auto previewArea = _p->Preview->ClientPart();
+	auto scoreArea = _p->Score->ClientPart();
+	clearFrame(gameArea);
+	clearFrame(previewArea);
+	clearFrame(scoreArea);
+
+	auto H = _p->MaxCharHeightCount();
+	auto W = _p->MaxCharWidthCount();
+
+	for (int r = gameArea.Top(); r <= gameArea.Bottom(); r++)
+		for (int c = gameArea.Left(); c <= gameArea.Right(); c++)
+			if (_data->IsBusy(r, c))
+				_frame[r][c] = C_BOUNDS_CHAR;
+
+	for (auto point : *_data->GameFigure()->Points())
+	{
+		if (gameArea.PointIn(point))
+			_frame[point.y][point.x] = C_BOUNDS_CHAR;
+	}
+
+	for (auto point : *_data->PreviewFigure()->Points())
+	{
+		if (previewArea.PointIn(point))
+			_frame[point.y][point.x] = C_BOUNDS_CHAR;
+	}
+
+	int r = scoreArea.Top() + scoreArea.Height() / 2;
+	int c = scoreArea.Left() + 1;
+
+	string s = " Score: " + to_string(_data->TotalScore()) + " points";
+	const char* chrs = s.c_str();
+	int i = 0;
+	char chr = chrs[i];
+	while (chr != '\0')
+	{
+		_frame[r][c + i] = chr;
+		i++;
+		chr = chrs[i];
+	}
+
 
 	for (int r = 0; r < H; r++)
-	{
-		addstr(frame[r]);
-	}
+		addstr(_frame[r]);
 
 	refresh();
-	
-	/*
-	if (_data->_log.is_open())
-	{
-		_data->_log << "Render" << std::endl;
-	}
-	*/
+
 	return 0;
 }
 
 Render::~Render()
 {
-	endwin();
+	//endwin();
 	_data = nullptr;
 }
 
+void Render::initFrame()
+{
+	int H = _p->MaxCharHeightCount();
+	int W = _p->MaxCharWidthCount();
+
+	_frame = new char* [H];
+	for (int r = 0; r < H; r++)
+	{
+		_frame[r] = new char[W+1];
+		for (int c = 0; c < W; c++)
+			_frame[r][c] = C_EMPTY_CHAR;
+		_frame[r][W] = '\0';
+	}
+
+	auto areaScore = _p->Output(AreaType::SCORE);
+	initFrameStatic(areaScore->Bounds());
+	auto areaGame = _p->Output(AreaType::GAME);
+	initFrameStatic(areaGame->Bounds());
+	auto areaPrev = _p->Output(AreaType::PREVIEW);
+	initFrameStatic(areaPrev->Bounds());
+}
+
+void Render::initFrameStatic(CRectangle& rect)
+{
+	for (int c = rect.Left(); c <= rect.Right(); c++)
+	{
+		_frame[rect.Top()][c] = C_BOUNDS_CHAR;
+		_frame[rect.Bottom()][c] = C_BOUNDS_CHAR;
+	}
+
+	for (int r = rect.Top(); r <= rect.Bottom(); r++)
+	{
+		_frame[r][rect.Left()] = C_BOUNDS_CHAR;
+		_frame[r][rect.Right()] = C_BOUNDS_CHAR;
+	}
+}
+
+void Render::clearFrame(CRectangle& rect)
+{
+	for (int r = rect.Top(); r <= rect.Bottom(); r++)
+		for (int c = rect.Left(); c <= rect.Right(); c++)
+			_frame[r][c] = C_EMPTY_CHAR;
+}

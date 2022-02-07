@@ -46,7 +46,7 @@ void Engine::InitComponents()
 		throw;
 
 	_data = new GameData(_perspective);
-	_render = new Render(_data);
+	_render = new Render(_perspective, _data);
 	_mainTimerId = 1;
 }
 
@@ -62,9 +62,20 @@ void Engine::SetPerspective(Perspective* p)
 void Engine::ProccessInputKey(int key)
 {
 	MVector moveVector;
-	float angle(0.0f);
+	double angle(0.0f);
 	switch (key)
 	{
+	/*
+	case 75:
+		moveVector.x = -1;
+		break;
+	case 77:
+		moveVector.x = 1;
+		break;
+	case 80:
+		moveVector.y = 1;
+		break;
+	*/
 	case KEY_LEFT:
 		moveVector.x = -1;
 		break;
@@ -80,14 +91,57 @@ void Engine::ProccessInputKey(int key)
 	default:
 		break;
 	}
-	_data->Move(moveVector, angle);
+	Move(moveVector, angle);
 	_render->Rendering();
+}
+
+// pos - новая позиция центра фигуры в системе координат игровой области.
+// angle - угол поворота фигуры
+void Engine::TrySetNextPosition(const MVector& vect, const double angle)
+{
+  	auto figure = _data->GameFigure();
+	auto gameAreaBounds = _perspective->Game->ClientPart();
+	auto pos = *figure->PosCS() + vect;
+	auto posData = _data->GetFigurePos(pos, angle);
+
+	// проверяем вписывается ли она в игровую область
+	const Point newLeftTop = posData.NewBounds.LeftTop();
+	const Point newRightBottom = posData.NewBounds.RightBottom();
+	// перемещение фигуры привело к выходу за боковые границы игровой области
+	auto fgIsOutOfSide = !gameAreaBounds.XIn(vect.x > 0 ? newRightBottom.x : newLeftTop.x);
+	// перемещение фигуры привело к выходу за нижнюю границу игровой области
+	auto fgIsOutOfBottom = !gameAreaBounds.YIn(newRightBottom.y) && gameAreaBounds.YIn(newLeftTop.y);
+	// фигура пересекается с занятыми ячейками игровой области
+	auto fgIsIntersect = posData.IsIntersect;
+
+	// если новые границы фигуры принадлежат игровой области и не пересекаются с ячейками игровой области, то нужно двигать фигуру
+	if (vect.x != 0 && !fgIsOutOfBottom && (fgIsOutOfSide || fgIsIntersect))
+	{
+
+	}
+	else if (vect.y != 0 && (fgIsOutOfBottom || fgIsIntersect))
+	{
+		_data->CheckScoreAndGetNext();
+	}
+	else
+	{
+		_data->SetFigurePos(posData);
+	}
+}
+
+
+
+// vect - вектор направления движения фигуры
+// angle - угол поворота фигуры
+void Engine::Move(const MVector& vect, const double angle)
+{
+	auto figure = _data->GameFigure();
+	TrySetNextPosition(vect, angle);
 }
 
 int Engine::TickTack()
 {
-	MVector moveVector(0, 1);
-	_data->Move(moveVector, 0);
+	Move(MVector(0,1), 0);
 	_render->Rendering();
 	return 0;
 }
@@ -97,12 +151,6 @@ void Engine::MainLoop(int x, int y, int w, int h)
 	HWND hwnd = FindWindowA("ConsoleWindowClass", NULL);
 	ShowWindow(hwnd, 1);
 
-	/*
-	if (!(hook = SetWindowsHookEx(WH_KEYBOARD_LL, HookCallback, NULL, 0)))
-	{
-		MessageBoxA(NULL, "Something wrong!", "Error", MB_ICONERROR);
-	}
-	*/
 	en.SetPerspective(new Perspective(GetConsoleViewPort(hwnd, 100, 100, 1024, 768)));
 	en.InitComponents();
 	
@@ -113,8 +161,10 @@ void Engine::MainLoop(int x, int y, int w, int h)
 	SetEvent(hTimer);
 
 	MSG message;
+	//_getch();
 	while (true)
 	{
+		
 		en.ProccessInputKey(getch());
 	}
 

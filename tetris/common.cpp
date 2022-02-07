@@ -6,24 +6,30 @@ int GetRandomNumber(int min, int max)
     // Равномерно распределяем рандомное число в нашем диапазоне
     return static_cast<int>(rand() * fraction * (max - min + 1) + min);
 }
-CRectangle& GetSize(vector<Point>& v)
+CRectangle& GetVectorPointsBounds(vector<Point>& v)
 {
-	auto minx = (*std::min_element(v.begin(), v.end(), [](const Point p1, const Point p2) {
-		return p1.x < p2.x;
-		})).x;
-	auto miny = (*std::min_element(v.begin(), v.end(), [](const Point p1, const Point p2) {
-		return p1.y < p2.y;
-		})).y;
-	auto maxx = (*std::min_element(v.begin(), v.end(), [](const Point p1, const Point p2) {
-		return p1.x > p2.x;
-		})).x;
-	auto maxy = (*std::min_element(v.begin(), v.end(), [](const Point p1, const Point p2) {
-		return p1.y > p2.y;
-		})).y;
-
-	/*auto topLeft = *std::min(v.begin(), v.end(), compare);
-	auto rightBottom = *std::max(v.begin(), v.end(), compare);*/
-	CRectangle size(minx, miny, maxx, maxy);
+	int l = 0, t = 0, r = 0, b = 0;
+	if (v.size() > 0)
+	{
+		auto point = v.at(0);
+		l = point.x;
+		t = point.y; 
+		r = point.x; 
+		b = point.y;
+		for (auto point : v)
+		{
+			if (l > point.x)
+				l = point.x;
+			if (r < point.x)
+				r = point.x;
+			if (t > point.y)
+				t = point.y;
+			if (b < point.y)
+				b = point.y;
+		}
+	}
+	
+	CRectangle size(l, t, r, b);
 	return size;
 }
 

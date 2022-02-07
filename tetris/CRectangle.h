@@ -12,7 +12,7 @@ class CRectangle
 		CRectangle()
 			: _left(0), _right(0), _top(0), _bottom(0) { };
 		
-		CRectangle(int left, int top, int right, int bottom)
+		CRectangle(const int left, const int top, const int right, const int bottom)
 			: _left(left), _top(top), _right(right), _bottom(bottom) {};
 
 		// width size in characters
@@ -29,20 +29,60 @@ class CRectangle
 
 		inline int Bottom() { return _bottom; };
 
-		Point LeftTop() { return Point(_left, _top); }
+		Point& LeftTop()
+		{
+			Point p(_left, _top);
+			return p;
+		}
 
-		Point RightBottom() { return Point(_right, _bottom); }
+		Point& RightBottom()
+		{
+			Point p(_right, _bottom);
+			return p;
+		}
 
+		void NewSize(const int left, const int top, const int right, const int bottom)
+		{
+			_left += left;
+			_top += top;
+			_right += right;
+			_bottom += bottom;
+		}
+
+		void NewSize(const Point& topLeft, const Point& rightBottom)
+		{
+			_left += topLeft.x;
+			_top += topLeft.y;
+			_right += rightBottom.x;
+			_bottom += rightBottom.y;
+		}
+
+		/*
 		void MoveBy(int nx, int ny) 
 		{
 			_left += nx;
 			_top += ny;
 			_right += nx;
 			_bottom += ny;
-		}
+		}*/
 
-		bool In(Point& p)
+		bool PointIn(const Point& p)
 		{
 			return p.x >= _left && p.x <= _right && p.y >= _top && p.y <= _bottom;
+		}
+
+		bool PointIn(const int x, const int y)
+		{
+			return x >= _left && x <= _right && y >= _top && y <= _bottom;
+		}
+
+		bool XIn(const int x)
+		{
+			return x >= _left && x <= _right;
+		}
+
+		bool YIn(const int y)
+		{
+			return y >= _top && y <= _bottom;
 		}
 	};

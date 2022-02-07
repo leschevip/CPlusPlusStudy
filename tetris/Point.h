@@ -1,7 +1,7 @@
 #pragma once
 #include "MVector.h"
 
-class Point
+struct Point
 {
 public:
 	int x;
@@ -16,11 +16,29 @@ public:
 		return x == p.x && y == p.y;
 	}
 
-	Point& operator +=(Point& v)
+	Point& operator +=(const Point& v)
 	{
 		x += v.x;
 		y += v.y;
 		return *this;
+	}
+
+	Point& operator +(const Point& v)
+	{
+		Point p(x + v.x, y + v.y);
+		return p;
+	}
+
+	Point& operator +(const MVector& v)
+	{
+		Point p(x + v.x, y + v.y);
+		return p;
+	}
+
+	Point& operator -(const Point& v)
+	{
+		Point p(x - v.x, y - v.y);
+		return p;
 	}
 
 	Point& operator +=(MVector& v)

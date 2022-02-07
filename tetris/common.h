@@ -10,6 +10,6 @@ using namespace std;
 
 int GetRandomNumber(int min, int max);
 
-CRectangle& GetSize(vector<Point>& vector);
+CRectangle& GetVectorPointsBounds(vector<Point>& vector);
 
 bool IsIntersectVectors(vector<Point>& v1, vector<Point>& v2);

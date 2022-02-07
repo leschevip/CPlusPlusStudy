@@ -58,3 +58,23 @@ OutputArea* Perspective::CreateOutputArea(AreaType type, float left, float top, 
     OutputArea* area = new OutputArea(type, rect);
     return area;
 }
+
+OutputArea* Perspective::Output(AreaType type)
+{
+    switch (type)
+    {
+    case AreaType::EMPTY:
+        return nullptr;
+    case AreaType::SCORE:
+        return Score;
+    case AreaType::GAME:
+        return Game;
+    case AreaType::PREVIEW:
+        return Preview;
+    case AreaType::SCREEN:
+        return Full;
+    default:
+        break;
+    }
+    return nullptr;
+}

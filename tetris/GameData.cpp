@@ -1,208 +1,165 @@
 #include "GameData.h"
 
-GameData::GameData(Perspective* p) : ScoreCount(0), _frame(nullptr), _p(p)
+GameData::GameData(Perspective* p) : _totalScore(0), _p(p)
 {
 	_figures.push_back(FigureCreator::Create(FigureType::F1));
-	_frame = InitFrame();
-	_frameBuffer = InitFrame();
+	_figures.push_back(FigureCreator::Create(FigureType::F2));
+	Init();
 	GameFigureActive = CreateRandomFigure(_p->Game);
 	PreviewFigureActive = CreateRandomFigure(_p->Preview);
-	//_log.open("E:\\log.txt"); // окрываем файл для записи
-	
 };
 
-void GameData::ClearFrame(char** frame, CRectangle& rect)
-{
-	for (int r = rect.Top(); r <= rect.Bottom(); r++)
-		for (int c = rect.Left(); c <= rect.Right(); c++)
-			frame[r][c] = C_EMPTY_CHAR;
-}
 
-char** GameData::InitFrame()
+
+void GameData::Init()
 {
 	int H = _p->MaxCharHeightCount();
 	int W = _p->MaxCharWidthCount();
-
-	char** frame = new char* [H];
+	_busyPoints = new bool* [H];
 	for (int r = 0; r < H; r++)
 	{
-		frame[r] = new char[W+1];
+		_busyPoints[r] = new bool[W];
 		for (int c = 0; c < W; c++)
-			frame[r][c] = C_EMPTY_CHAR;
-		frame[r][W] = '\0';
-	}
-
-	auto areaScore = Output(AreaType::SCORE);
-	InitStaticFramePart(frame, areaScore->Bounds());
-	auto areaGame = Output(AreaType::GAME);
-	InitStaticFramePart(frame, areaGame->Bounds());
-	auto areaPrev = Output(AreaType::PREVIEW);
-	InitStaticFramePart(frame, areaPrev->Bounds());
-	return frame;
-}
-
-void GameData::InitStaticFramePart(char** frame, CRectangle& rect)
-{
-	for (int c = rect.Left(); c <= rect.Right(); c++)
-	{
-		frame[rect.Top()][c] = C_BOUNDS_CHAR;
-		frame[rect.Bottom()][c] = C_BOUNDS_CHAR;
-	}
-
-	for (int r = rect.Top(); r <= rect.Bottom(); r++)
-	{
-		frame[r][rect.Left()] = C_BOUNDS_CHAR;
-		frame[r][rect.Right()] = C_BOUNDS_CHAR;
+			_busyPoints[r][c] = false;
 	}
 }
 
 FigureInstance* GameData::CreateRandomFigure(OutputArea* output)
 {
 	int index = GetRandomNumber(0, _figures.size()-1);
-	
 	auto f = _figures.at(index);
-	auto v = vector<Point>(f->Points);
+	return CreateFigure(f, output);
+}
 
+FigureInstance* GameData::CreateFigure(Figure* model, OutputArea* output)
+{
 	auto area = output->ClientPart();
-	
-	int x = 0, y = 0;
+	Point* dp = nullptr;
 	if (output->IsType(AreaType::GAME))
 	{
-		x = area.Width() / 2 + area.Left();
-		y = -f->Size.Height() / 2 + area.Top();
+		dp = new Point(area.Width() / 2, 0);
 	}
 	else if (output->IsType(AreaType::PREVIEW))
 	{
-		x = area.Width() / 2 + area.Left();
-		y = area.Height() / 2 + area.Top();
+		dp = new Point(area.Width() / 2 + area.Left(), area.Height() / 2 + area.Top());
 	}
-	Point* dp = new Point(x, y);
-	auto* fInstance = new FigureInstance(f, v);
-	fInstance->Size->MoveBy(dp->x, dp->y);
-	fInstance->Position = dp;
-	for (Point& point : fInstance->Points)
-		point += *dp;
-
-	return fInstance;
+	auto* fg = new FigureInstance(model, dp);
+	fg->SetData(GetFigurePos(fg));
+	return fg;
 }
 
-int GameData::FrameCols()
+
+FigureInstance* GameData::GameFigure()
 {
-	return _p->MaxCharWidthCount();
+	return GameFigureActive;
 }
 
-int GameData::FrameRows()
+FigureInstance* GameData::PreviewFigure()
 {
-	return _p->MaxCharHeightCount();
+	return PreviewFigureActive;
 }
 
-char** GameData::Frame()
+vector<Point> GameData::GetPos(FigureInstance* fg)
 {
-	return _frame;
+	return GetPos(fg, *fg->PosCS(), fg->Angle());
 }
 
-void GameData::CalcState()
+vector<Point> GameData::GetPos(FigureInstance* fg, const Point& pos, const double angle)
 {
-	auto gameArea = _p->Game->ClientPart();
-	auto previewArea = _p->Preview->ClientPart();
-	ClearFrame(_frame, gameArea);
-	ClearFrame(_frame, previewArea);
-
-	for (auto& point : _filledPoints)
+	double angl = fg->Angle() + angle;
+	vector<Point> newPoints;
+	// повернуть фигуру в ЛСК и сдвинуть ЛСК на предлагаемую позицию
+	for (auto point : *fg->Model()->Points())
 	{
-		_frame[point.y][point.x] = C_BOUNDS_CHAR;
+		const int xx = point.x * cos(angl) - point.y * sin(angl) + pos.x;
+		const int yy = point.x * sin(angl) + point.y * cos(angl) + pos.y;
+		newPoints.push_back(Point(xx, yy));
 	}
-
-	for (auto& point : GameFigureActive->Points)
-	{
-		if (gameArea.In(point))
-			_frame[point.y][point.x] = C_BOUNDS_CHAR;
-	}
-
-	for (auto& point : PreviewFigureActive->Points)
-	{
-		if (previewArea.In(point))
-			_frame[point.y][point.x] = C_BOUNDS_CHAR;
-	}
+	return newPoints;
 }
 
-void GameData::Move(MVector& vect, float angle)
+FigurePositionData GameData::GetFigurePos(FigureInstance* fg)
 {
-	auto size = GameFigureActive->Size;
-	auto outputGame = _p->Game;
-	auto outputPreview = _p->Preview;
-	auto area = outputGame->ClientPart();
-	
-	if ((size->Left() == area.Left() && vect.x < 0) || (size->Right() == area.Right() && vect.x > 0))
+	FigurePositionData data;
+	data.Angle = fg->Angle();
+	data.pos = *fg->PosCS();
+	data.NewPoints = GetPos(fg);
+	data.NewBounds = GetVectorPointsBounds(data.NewPoints);
+	data.IsIntersect = false;
+	return data;
+}
+
+FigurePositionData GameData::GetFigurePos(const Point& p, const double angle)
+{
+	auto fg = GameFigureActive; 
+	FigurePositionData data;
+	data.Angle = fg->Angle() + angle;
+	data.pos = p;
+	data.NewPoints = GetPos(fg, p, angle);
+	data.NewBounds = GetVectorPointsBounds(data.NewPoints);
+	data.IsIntersect = false;
+	for (auto point : data.NewPoints)
 	{
-		vect.x = 0;
-		return;
-	}
-	else
-	{
-		//next position
-		auto curPoints = GameFigureActive->Points;
-		vector<Point> vTmp(curPoints);
-		if (angle > 0)
+		if (point.x > 0 && point.y > 0 && _busyPoints[point.y][point.x])
 		{
-      		int i = 1;
-		}
-
-		auto pos = GameFigureActive->Position;
-		for (Point& point : vTmp)
-		{
-			point += vect;
-
-			/*
-			if (angle > 0)
-			{
-				point.x = (point.x - pos->x) * cosf(angle) + (point.y - pos->y) * sin(angle) + pos->x;
-				point.y = -(point.x - pos->x) * sinf(angle) + (point.y - pos->y) * cos(angle) + pos->y;
-			}
-			else
-			{
-				point += vect;
-			}
-			*/
-		}
-			
-
-		bool isIntersect = IsIntersectVectors(vTmp, _filledPoints);
-		if (vect.x != 0 && isIntersect)
-		{
-			return;
-		}
-		
-		if (size->Bottom() != area.Bottom() && !isIntersect)
-		{
-			GameFigureActive->Points.assign(vTmp.begin(), vTmp.end());
-			GameFigureActive->Size->MoveBy(vect.x, vect.y);
-			GameFigureActive->Position->x += vect.x;
-			GameFigureActive->Position->y += vect.y;
-		}
-		else 
-		{
-			_filledPoints.insert(_filledPoints.end(), curPoints.begin(), curPoints.end());
-			FigureInstance* tmp(nullptr);
-
-			tmp = GameFigureActive;
-			GameFigureActive = CreateRandomFigure(outputGame);
-			delete tmp;
-			tmp = PreviewFigureActive;
-			PreviewFigureActive = CreateRandomFigure(outputPreview);
-			delete tmp;
+			data.IsIntersect = _busyPoints[point.y][point.x];
+			if (data.IsIntersect)
+				break;
 		}
 	}
-	/*
-	if (_log.is_open())
-	{
-		auto* rect = GameFigureActive->Size;
-		_log << "Bottom:" << rect->Bottom() << std::endl;
-	}
-	*/
-
-	CalcState();
+	return data;
 }
+
+void GameData::SetFigurePos(const FigurePositionData& data)
+{
+	GameFigureActive->SetData(data);
+}
+
+void GameData::CheckScoreAndGetNext()
+{
+	for (auto point : *GameFigureActive->Points())
+		_busyPoints[point.y][point.x] = true;
+
+	auto fgBounds = GameFigureActive->Bounds();
+	auto width = _p->MaxCharWidthCount();
+	for (int r = fgBounds.Top(); r <= fgBounds.Bottom(); r++)
+	{
+		bool isBusy(false);
+		for (int c = 0; c < width; c++)
+		{
+			isBusy = _busyPoints[r][c];
+			if (!isBusy)
+				break;
+		}
+		if (isBusy)
+		{
+			for (int c = 0; c < width; c++)
+				_busyPoints[r][c] = !_busyPoints[r][c];
+
+			_totalScore += width;
+		}
+	}
+
+	FigureInstance* tmp(nullptr);
+	tmp = GameFigureActive;
+	GameFigureActive = CreateFigure(PreviewFigureActive->Model(), _p->Game);
+	delete tmp;
+
+	tmp = PreviewFigureActive;
+	PreviewFigureActive = CreateRandomFigure(_p->Preview);
+	delete tmp;
+}
+
+bool GameData::IsBusy(const int r, const int c)
+{
+	return _busyPoints[r][c];
+}
+
+int GameData::TotalScore()
+{
+	return _totalScore;
+}
+
 
 GameData::~GameData()
 {
@@ -215,34 +172,12 @@ GameData::~GameData()
 		delete f;
 	_figures.clear();
 
-	int H = FrameCols();
+	int H = _p->MaxCharHeightCount();
 	for (int i = 0; i < H; i++)
 	{
-		delete[] _frame[i];
-		delete[] _frameBuffer[i];
+		delete[] _busyPoints[i];
 	}
-	delete[] _frame;
-	delete[] _frameBuffer;
-
+	delete[] _busyPoints;
+	_busyPoints = nullptr;
 	_p = nullptr;
-}
-
-OutputArea* GameData::Output(AreaType type)
-{
-	switch (type)
-	{
-	case AreaType::EMPTY:
-		return nullptr;
-	case AreaType::SCORE:
-		return _p->Score;
-	case AreaType::GAME:
-		return _p->Game;
-	case AreaType::PREVIEW:
-		return _p->Preview;
-	case AreaType::SCREEN:
-		return _p->Full;
-	default:
-		break;
-	}
-	return nullptr;
 }

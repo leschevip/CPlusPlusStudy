@@ -31,6 +31,7 @@ public:
 	float CharH();
 	int MaxCharWidthCount();
 	int MaxCharHeightCount();
+	OutputArea* Output(AreaType type);
 
 	OutputArea* Score;
 	OutputArea* Game;

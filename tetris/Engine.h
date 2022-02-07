@@ -7,8 +7,7 @@
 #include "Render.h"
 #include "Timer.h"
 #include <math.h>
-
-
+//#include <conio.h>
 
 using namespace std;
 
@@ -27,6 +26,8 @@ public:
 	void SetPerspective(Perspective* p);
 	void InitComponents();	
 	void ProccessInputKey(int key);
+	void TrySetNextPosition(const MVector& vect, const double angle);
+	void Move(const MVector& vect, const double angle);
 	
 
 };
