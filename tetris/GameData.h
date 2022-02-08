@@ -6,7 +6,6 @@
 #include "Figure.h";
 #include "FigureCreator.h";
 #include "Perspective.h";
-#include "common.h";
 #include "FigurePositionData.h"
 
 #pragma warning (disable 6295)

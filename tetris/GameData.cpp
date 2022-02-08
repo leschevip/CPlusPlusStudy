@@ -10,8 +10,6 @@ GameData::GameData(Perspective* p) : _totalScore(0), _p(p)
 	PreviewFigureActive = CreateRandomFigure(_p->Preview);
 };
 
-
-
 void GameData::Init()
 {
 	int H = _p->MaxCharHeightCount();

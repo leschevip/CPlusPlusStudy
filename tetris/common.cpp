@@ -8,6 +8,8 @@ extern const float H_FLOAT_MIN = 0.0f;
 extern const float H_FLOAT_MAX = 1.0f;
 extern const float V_FLOAT_MIN = 0.0f;
 extern const float V_FLOAT_MAX = 1.0f;
+extern const int32_t E_ESC = 27;
+extern const int32_t E_SPACE_KEY = 32;
 
 int GetRandomNumber(int min, int max)
 {

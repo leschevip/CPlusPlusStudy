@@ -1,6 +1,8 @@
 #include <Windows.h>
 #include "Engine.h"
 
+extern const int32_t E_ESC;
+
 using namespace std;
 
 const uint32_t W_TOP = 100;
@@ -70,7 +72,7 @@ void MainLoop(const uint32_t& x, const uint32_t& y, const uint32_t& w, const uin
 		if (isGameEnd)
 		{
 			int key = getch();
-			if (key == 27)
+			if (key == E_ESC)
 				break;
 		}
 		else

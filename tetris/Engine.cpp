@@ -1,5 +1,7 @@
 #include "Engine.h"
 
+const int32_t E_SPACE_KEY = 32;
+
 void Engine::InitComponents()
 {
 	if (_perspective == nullptr)
@@ -43,7 +45,7 @@ int Engine::ProccessInputKey(const int32_t& key)
 	case KEY_DOWN:
 		moveVector.y = 1;
 		break;
-	case 32:
+	case E_SPACE_KEY:
 		angle = M_PI_2;
 		break;
 	default:
