@@ -4,6 +4,7 @@ GameData::GameData(Perspective* p) : _totalScore(0), _p(p)
 {
 	_figures.push_back(FigureCreator::Create(FigureType::F1));
 	_figures.push_back(FigureCreator::Create(FigureType::F2));
+	_figures.push_back(FigureCreator::Create(FigureType::F3));
 	Init();
 	GameFigureActive = CreateRandomFigure(_p->Game);
 	PreviewFigureActive = CreateRandomFigure(_p->Preview);

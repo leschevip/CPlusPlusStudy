@@ -10,7 +10,8 @@ using namespace std;
 enum class FigureType
 {
 	F1,
-	F2
+	F2,
+	F3
 };
 
 class Figure
