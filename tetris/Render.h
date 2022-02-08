@@ -4,6 +4,7 @@
 //#include <iostream>
 #include <string>
 
+using namespace std;
 
 class Render
 {
@@ -21,4 +22,5 @@ public:
 	Render(Perspective* const p, GameData* const data);
 	~Render();
 	int Rendering();
+	//int RenderingEndGame();
 };

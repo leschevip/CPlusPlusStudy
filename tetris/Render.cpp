@@ -12,7 +12,6 @@ Render::Render( Perspective* const p, GameData* const data) : _data(data), _p(p)
 
 int Render::Rendering()
 {
-	//system("cls");
 	clear();
 
 	auto gameArea = _p->Game->ClientPart();
@@ -22,9 +21,8 @@ int Render::Rendering()
 	clearFrame(previewArea);
 	clearFrame(scoreArea);
 
-	auto H = _p->MaxCharHeightCount();
-	auto W = _p->MaxCharWidthCount();
-
+	auto result = _data->IsEndGame();
+	
 	for (int r = gameArea.Top(); r <= gameArea.Bottom(); r++)
 		for (int c = gameArea.Left(); c <= gameArea.Right(); c++)
 			if (_data->IsBusy(r, c))
@@ -45,7 +43,7 @@ int Render::Rendering()
 	int r = scoreArea.Top() + scoreArea.Height() / 2;
 	int c = scoreArea.Left() + 1;
 
-	string s = " Score: " + to_string(_data->TotalScore()) + " points";
+	string s = " Score: " + to_string(_data->TotalScore()) + " points" + (result ? " GAME OWER!!!" : "");
 	const char* chrs = s.c_str();
 	int i = 0;
 	char chr = chrs[i];
@@ -56,19 +54,27 @@ int Render::Rendering()
 		chr = chrs[i];
 	}
 
-
+	auto H = _p->MaxCharHeightCount();
 	for (int r = 0; r < H; r++)
 		addstr(_frame[r]);
 
 	refresh();
 
-	return 0;
+	return result;
 }
 
 Render::~Render()
 {
-	//endwin();
+	endwin();
+
+	int H = _p->MaxCharHeightCount();
+	for (int r = 0; r < H; r++)
+		delete[] _frame[r];
+	delete[] _frame;
+
 	_data = nullptr;
+	_p = nullptr;
+	_frame = nullptr;
 }
 
 void Render::initFrame()

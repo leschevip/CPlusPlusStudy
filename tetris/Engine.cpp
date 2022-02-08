@@ -3,7 +3,7 @@
 // HHOOK hook;
 Engine en;
 HANDLE hTimer = NULL;
-
+bool isGameEnd;
 /*
 LRESULT __stdcall HookCallback(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -34,7 +34,9 @@ unsigned long _stdcall MainTimer(void*)
 	while (true)
 	{
 		WaitForSingleObject(hTimer, 1000);
-		en.TickTack();
+		isGameEnd = en.TickTack();
+		if (isGameEnd)
+			return 0;
 	}
 	return 0;
 }
@@ -47,11 +49,17 @@ void Engine::InitComponents()
 
 	_data = new GameData(_perspective);
 	_render = new Render(_perspective, _data);
-	_mainTimerId = 1;
 }
 
-Engine::Engine() : _data(0), _render(0), _perspective(0), _mainTimerId(0)
+Engine::Engine() : _data(0), _render(0), _perspective(0)
 {
+}
+
+Engine::~Engine()
+{
+	delete _render;
+	delete _data;
+	delete _perspective;
 }
 
 void Engine::SetPerspective(Perspective* p)
@@ -59,23 +67,15 @@ void Engine::SetPerspective(Perspective* p)
 	_perspective = p;
 }
 
-void Engine::ProccessInputKey(int key)
+int Engine::ProccessInputKey(int key)
 {
+	if (_data->IsEndGame())
+		return 1;
+
 	MVector moveVector;
 	double angle(0.0f);
 	switch (key)
 	{
-	/*
-	case 75:
-		moveVector.x = -1;
-		break;
-	case 77:
-		moveVector.x = 1;
-		break;
-	case 80:
-		moveVector.y = 1;
-		break;
-	*/
 	case KEY_LEFT:
 		moveVector.x = -1;
 		break;
@@ -91,8 +91,9 @@ void Engine::ProccessInputKey(int key)
 	default:
 		break;
 	}
-	Move(moveVector, angle);
+ 	TrySetNextPosition(moveVector, angle);
 	_render->Rendering();
+	return 0;
 }
 
 // pos - новая позиция центра фигуры в системе координат игровой области.
@@ -108,42 +109,51 @@ void Engine::TrySetNextPosition(const MVector& vect, const double angle)
 	const Point newLeftTop = posData.NewBounds.LeftTop();
 	const Point newRightBottom = posData.NewBounds.RightBottom();
 	// перемещение фигуры привело к выходу за боковые границы игровой области
-	auto fgIsOutOfSide = !gameAreaBounds.XIn(vect.x > 0 ? newRightBottom.x : newLeftTop.x);
+	auto fgIsOutOfSide = !gameAreaBounds.XIn(newRightBottom.x) || !gameAreaBounds.XIn(newLeftTop.x);
 	// перемещение фигуры привело к выходу за нижнюю границу игровой области
 	auto fgIsOutOfBottom = !gameAreaBounds.YIn(newRightBottom.y) && gameAreaBounds.YIn(newLeftTop.y);
 	// фигура пересекается с занятыми ячейками игровой области
 	auto fgIsIntersect = posData.IsIntersect;
 
-	// если новые границы фигуры принадлежат игровой области и не пересекаются с ячейками игровой области, то нужно двигать фигуру
-	if (vect.x != 0 && !fgIsOutOfBottom && (fgIsOutOfSide || fgIsIntersect))
-	{
-
+	// если при перемещении влево вправо мы выходим за левую или правую границы или пересекаемся с другой фигурой то выходим
+	// если при повороте мы выходим за все границы области вывода или пересекаемся с другой фигурой то выходим
+	if ((vect.x != 0 && !fgIsOutOfBottom && (fgIsOutOfSide || fgIsIntersect)) || 
+		(vect.y == 0 && angle != 0 && (fgIsOutOfBottom || fgIsIntersect || fgIsOutOfSide)))
+	{ 
+		return;
 	}
-	else if (vect.y != 0 && (fgIsOutOfBottom || fgIsIntersect))
+
+	// если достигли конца нижней области вывода или пересечения с иными фигурами, то считаем очки и генерируем новую фигуру
+	if (vect.y != 0 && (fgIsOutOfBottom || fgIsIntersect))
 	{
 		_data->CheckScoreAndGetNext();
 	}
+	// двигаем фигуру
 	else
 	{
-		_data->SetFigurePos(posData);
+ 		_data->SetFigurePos(posData);
 	}
 }
 
-
-
-// vect - вектор направления движения фигуры
-// angle - угол поворота фигуры
-void Engine::Move(const MVector& vect, const double angle)
+bool Engine::IsEndGame()
 {
-	auto figure = _data->GameFigure();
-	TrySetNextPosition(vect, angle);
+	return _data->IsEndGame();
 }
+
 
 int Engine::TickTack()
 {
-	Move(MVector(0,1), 0);
+	bool isEnd = _data->IsEndGame();
+	if (!isEnd)
+	{
+		TrySetNextPosition(MVector(0, 1), 0);
+	}
 	_render->Rendering();
-	return 0;
+	// else
+	//{
+	//	_render->RenderingEndGame();
+	//}
+	return isEnd;
 }
 
 void Engine::MainLoop(int x, int y, int w, int h)
@@ -161,12 +171,19 @@ void Engine::MainLoop(int x, int y, int w, int h)
 	SetEvent(hTimer);
 
 	MSG message;
-	//_getch();
 	while (true)
 	{
-		
-		en.ProccessInputKey(getch());
+		if (isGameEnd)
+		{
+			int key = getch();
+			if (key == 27)
+				break;
+		}
+		else
+		{
+			isGameEnd = en.ProccessInputKey(getch());
+		}
 	}
-
 	CloseHandle(hTimer);
+	hTimer = NULL;
 }

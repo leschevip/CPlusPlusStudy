@@ -15,12 +15,9 @@ void GameData::Init()
 {
 	int H = _p->MaxCharHeightCount();
 	int W = _p->MaxCharWidthCount();
-	_busyPoints = new bool* [H];
 	for (int r = 0; r < H; r++)
 	{
-		_busyPoints[r] = new bool[W];
-		for (int c = 0; c < W; c++)
-			_busyPoints[r][c] = false;
+		_busyPoints.insert({ r, new bool[W] {false} });
 	}
 }
 
@@ -48,7 +45,6 @@ FigureInstance* GameData::CreateFigure(Figure* model, OutputArea* output)
 	return fg;
 }
 
-
 FigureInstance* GameData::GameFigure()
 {
 	return GameFigureActive;
@@ -59,6 +55,7 @@ FigureInstance* GameData::PreviewFigure()
 	return PreviewFigureActive;
 }
 
+
 vector<Point> GameData::GetPos(FigureInstance* fg)
 {
 	return GetPos(fg, *fg->PosCS(), fg->Angle());
@@ -66,13 +63,12 @@ vector<Point> GameData::GetPos(FigureInstance* fg)
 
 vector<Point> GameData::GetPos(FigureInstance* fg, const Point& pos, const double angle)
 {
-	double angl = fg->Angle() + angle;
 	vector<Point> newPoints;
 	// повернуть фигуру в ЛСК и сдвинуть ЛСК на предлагаемую позицию
 	for (auto point : *fg->Model()->Points())
 	{
-		const int xx = point.x * cos(angl) - point.y * sin(angl) + pos.x;
-		const int yy = point.x * sin(angl) + point.y * cos(angl) + pos.y;
+		const int xx = round(point.x * cos(angle) - point.y * sin(angle)) + pos.x;
+		const int yy = round(point.x * sin(angle) + point.y * cos(angle)) + pos.y;
 		newPoints.push_back(Point(xx, yy));
 	}
 	return newPoints;
@@ -93,9 +89,10 @@ FigurePositionData GameData::GetFigurePos(const Point& p, const double angle)
 {
 	auto fg = GameFigureActive; 
 	FigurePositionData data;
-	data.Angle = fg->Angle() + angle;
+	double curAngle = (fg->Angle() + angle) == 2 * M_PI ? 0 : fg->Angle() + angle;
+	data.Angle = curAngle;
 	data.pos = p;
-	data.NewPoints = GetPos(fg, p, angle);
+	data.NewPoints = GetPos(fg, p, curAngle);
 	data.NewBounds = GetVectorPointsBounds(data.NewPoints);
 	data.IsIntersect = false;
 	for (auto point : data.NewPoints)
@@ -118,25 +115,36 @@ void GameData::SetFigurePos(const FigurePositionData& data)
 void GameData::CheckScoreAndGetNext()
 {
 	for (auto point : *GameFigureActive->Points())
-		_busyPoints[point.y][point.x] = true;
+	{
+		if (!_busyPoints.contains(point.y))
+			_busyPoints.insert({ point.y, new bool[_p->MaxCharWidthCount()] });
+		bool *ptr = _busyPoints.at(point.y);
+		ptr[point.x] = true;
+	}
 
 	auto fgBounds = GameFigureActive->Bounds();
-	auto width = _p->MaxCharWidthCount();
+	auto rect = _p->Game->ClientPart();
+	auto width = rect.Width();
 	for (int r = fgBounds.Top(); r <= fgBounds.Bottom(); r++)
 	{
-		bool isBusy(false);
-		for (int c = 0; c < width; c++)
+		bool isBusy(true);
+		for (int c = rect.Left(); c < rect.Right(); c++)
 		{
-			isBusy = _busyPoints[r][c];
-			if (!isBusy)
+			if (!IsBusy(r, c))
+			{
+				isBusy = !isBusy;
 				break;
+			}
 		}
 		if (isBusy)
 		{
-			for (int c = 0; c < width; c++)
-				_busyPoints[r][c] = !_busyPoints[r][c];
+			bool* row = _busyPoints.at(r);
+			for (int ri = r - 1; ri >= 0; ri--)
+				_busyPoints[r] = _busyPoints[r - 1];
+			_busyPoints[0] = new bool[_p->MaxCharWidthCount()]{ false };
 
 			_totalScore += width;
+			delete[] row;
 		}
 	}
 
@@ -152,12 +160,24 @@ void GameData::CheckScoreAndGetNext()
 
 bool GameData::IsBusy(const int r, const int c)
 {
-	return _busyPoints[r][c];
+	return _busyPoints.at(r)[c];
 }
 
 int GameData::TotalScore()
 {
 	return _totalScore;
+}
+
+bool GameData::IsEndGame()
+{
+	auto rect = _p->Game->ClientPart();
+	for (int c = rect.Left(); c < rect.Right(); c++)
+	{
+		bool* busyRowCells = _busyPoints.at(rect.Top());
+		if (busyRowCells[c])
+			return true;
+	}
+	return false;
 }
 
 
@@ -166,18 +186,15 @@ GameData::~GameData()
 	if (GameFigureActive != nullptr)
 		delete GameFigureActive;
 	if (PreviewFigureActive != nullptr)
-		delete GameFigureActive;
+		delete PreviewFigureActive;
 
 	for (auto* f : _figures)
 		delete f;
 	_figures.clear();
 
-	int H = _p->MaxCharHeightCount();
-	for (int i = 0; i < H; i++)
-	{
-		delete[] _busyPoints[i];
-	}
-	delete[] _busyPoints;
-	_busyPoints = nullptr;
+	for (auto item : _busyPoints)
+		delete[] item.second;
+	_busyPoints.clear();
+	
 	_p = nullptr;
 }

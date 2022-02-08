@@ -17,7 +17,6 @@ private:
 	Perspective* _perspective;
 	GameData* _data;
 	Render* _render;
-	UINT_PTR _mainTimerId;
 public:
 
 	static void MainLoop(int x, int y, int w, int h);
@@ -25,9 +24,9 @@ public:
 	int TickTack();
 	void SetPerspective(Perspective* p);
 	void InitComponents();	
-	void ProccessInputKey(int key);
+	int ProccessInputKey(int key);
 	void TrySetNextPosition(const MVector& vect, const double angle);
-	void Move(const MVector& vect, const double angle);
-	
+	bool IsEndGame();
+	~Engine();
 
 };
