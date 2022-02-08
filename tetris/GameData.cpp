@@ -15,20 +15,20 @@ void GameData::Init()
 {
 	int H = _p->MaxCharHeightCount();
 	int W = _p->MaxCharWidthCount();
-	for (int r = 0; r < H; r++)
+	for (size_t r = 0; r < H; r++)
 	{
 		_busyPoints.insert({ r, new bool[W] {false} });
 	}
 }
 
-FigureInstance* GameData::CreateRandomFigure(OutputArea* output)
+FigureInstance* GameData::CreateRandomFigure(OutputArea* const output)
 {
 	int index = GetRandomNumber(0, _figures.size()-1);
 	auto f = _figures.at(index);
 	return CreateFigure(f, output);
 }
 
-FigureInstance* GameData::CreateFigure(Figure* model, OutputArea* output)
+FigureInstance* GameData::CreateFigure(Figure* const model, OutputArea* const  output)
 {
 	auto area = output->ClientPart();
 	Point* dp = nullptr;
@@ -56,12 +56,12 @@ FigureInstance* GameData::PreviewFigure()
 }
 
 
-vector<Point> GameData::GetPos(FigureInstance* fg)
+vector<Point> GameData::GetPos(FigureInstance* const fg)
 {
 	return GetPos(fg, *fg->PosCS(), fg->Angle());
 }
 
-vector<Point> GameData::GetPos(FigureInstance* fg, const Point& pos, const double angle)
+vector<Point> GameData::GetPos(FigureInstance* fg, const Point& pos, const double& angle)
 {
 	vector<Point> newPoints;
 	// повернуть фигуру в ЛСК и сдвинуть ЛСК на предлагаемую позицию
@@ -74,7 +74,7 @@ vector<Point> GameData::GetPos(FigureInstance* fg, const Point& pos, const doubl
 	return newPoints;
 }
 
-FigurePositionData GameData::GetFigurePos(FigureInstance* fg)
+FigurePositionData GameData::GetFigurePos(FigureInstance* const fg)
 {
 	FigurePositionData data;
 	data.Angle = fg->Angle();
@@ -85,7 +85,7 @@ FigurePositionData GameData::GetFigurePos(FigureInstance* fg)
 	return data;
 }
 
-FigurePositionData GameData::GetFigurePos(const Point& p, const double angle)
+FigurePositionData GameData::GetFigurePos(const Point& p, const double& angle)
 {
 	auto fg = GameFigureActive; 
 	FigurePositionData data;
@@ -125,10 +125,10 @@ void GameData::CheckScoreAndGetNext()
 	auto fgBounds = GameFigureActive->Bounds();
 	auto rect = _p->Game->ClientPart();
 	auto width = rect.Width();
-	for (int r = fgBounds.Top(); r <= fgBounds.Bottom(); r++)
+	for (size_t r = fgBounds.Top(); r <= fgBounds.Bottom(); r++)
 	{
 		bool isBusy(true);
-		for (int c = rect.Left(); c < rect.Right(); c++)
+		for (size_t c = rect.Left(); c < rect.Right(); c++)
 		{
 			if (!IsBusy(r, c))
 			{
@@ -139,7 +139,7 @@ void GameData::CheckScoreAndGetNext()
 		if (isBusy)
 		{
 			bool* row = _busyPoints.at(r);
-			for (int ri = r - 1; ri >= 0; ri--)
+			for (size_t ri = r - 1; ri >= 0; ri--)
 				_busyPoints[r] = _busyPoints[r - 1];
 			_busyPoints[0] = new bool[_p->MaxCharWidthCount()]{ false };
 
@@ -158,7 +158,7 @@ void GameData::CheckScoreAndGetNext()
 	delete tmp;
 }
 
-bool GameData::IsBusy(const int r, const int c)
+bool GameData::IsBusy(const int& r, const int& c)
 {
 	return _busyPoints.at(r)[c];
 }
@@ -171,7 +171,7 @@ int GameData::TotalScore()
 bool GameData::IsEndGame()
 {
 	auto rect = _p->Game->ClientPart();
-	for (int c = rect.Left(); c < rect.Right(); c++)
+	for (size_t c = rect.Left(); c < rect.Right(); c++)
 	{
 		bool* busyRowCells = _busyPoints.at(rect.Top());
 		if (busyRowCells[c])

@@ -1,5 +1,14 @@
 #include "common.h"
 
+extern const uint32_t HEIGHT_SCORE_PANEL = 3;
+extern const uint32_t WIDTH_PREWIEW_PANEL = 30;
+extern const char8_t C_EMPTY_CHAR = ' ';
+extern const char8_t C_BOUNDS_CHAR = '#';
+extern const float H_FLOAT_MIN = 0.0f;
+extern const float H_FLOAT_MAX = 1.0f;
+extern const float V_FLOAT_MIN = 0.0f;
+extern const float V_FLOAT_MAX = 1.0f;
+
 int GetRandomNumber(int min, int max)
 {
     static const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);

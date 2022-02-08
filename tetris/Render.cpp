@@ -1,5 +1,8 @@
 #include "Render.h"
 
+extern const char8_t C_EMPTY_CHAR;
+extern const char8_t C_BOUNDS_CHAR;
+
 Render::Render( Perspective* const p, GameData* const data) : _data(data), _p(p), _frame(nullptr)
 {
 	initFrame();
@@ -23,8 +26,8 @@ int Render::Rendering()
 
 	auto result = _data->IsEndGame();
 	
-	for (int r = gameArea.Top(); r <= gameArea.Bottom(); r++)
-		for (int c = gameArea.Left(); c <= gameArea.Right(); c++)
+	for (size_t r = gameArea.Top(); r <= gameArea.Bottom(); r++)
+		for (size_t c = gameArea.Left(); c <= gameArea.Right(); c++)
 			if (_data->IsBusy(r, c))
 				_frame[r][c] = C_BOUNDS_CHAR;
 
@@ -55,7 +58,7 @@ int Render::Rendering()
 	}
 
 	auto H = _p->MaxCharHeightCount();
-	for (int r = 0; r < H; r++)
+	for (size_t r = 0; r < H; r++)
 		addstr(_frame[r]);
 
 	refresh();
@@ -68,7 +71,7 @@ Render::~Render()
 	endwin();
 
 	int H = _p->MaxCharHeightCount();
-	for (int r = 0; r < H; r++)
+	for (size_t r = 0; r < H; r++)
 		delete[] _frame[r];
 	delete[] _frame;
 
@@ -83,10 +86,10 @@ void Render::initFrame()
 	int W = _p->MaxCharWidthCount();
 
 	_frame = new char* [H];
-	for (int r = 0; r < H; r++)
+	for (size_t r = 0; r < H; r++)
 	{
 		_frame[r] = new char[W+1];
-		for (int c = 0; c < W; c++)
+		for (size_t c = 0; c < W; c++)
 			_frame[r][c] = C_EMPTY_CHAR;
 		_frame[r][W] = '\0';
 	}
@@ -101,13 +104,13 @@ void Render::initFrame()
 
 void Render::initFrameStatic(CRectangle& rect)
 {
-	for (int c = rect.Left(); c <= rect.Right(); c++)
+	for (size_t c = rect.Left(); c <= rect.Right(); c++)
 	{
 		_frame[rect.Top()][c] = C_BOUNDS_CHAR;
 		_frame[rect.Bottom()][c] = C_BOUNDS_CHAR;
 	}
 
-	for (int r = rect.Top(); r <= rect.Bottom(); r++)
+	for (size_t r = rect.Top(); r <= rect.Bottom(); r++)
 	{
 		_frame[r][rect.Left()] = C_BOUNDS_CHAR;
 		_frame[r][rect.Right()] = C_BOUNDS_CHAR;
@@ -116,7 +119,7 @@ void Render::initFrameStatic(CRectangle& rect)
 
 void Render::clearFrame(CRectangle& rect)
 {
-	for (int r = rect.Top(); r <= rect.Bottom(); r++)
-		for (int c = rect.Left(); c <= rect.Right(); c++)
+	for (size_t r = rect.Top(); r <= rect.Bottom(); r++)
+		for (size_t c = rect.Left(); c <= rect.Right(); c++)
 			_frame[r][c] = C_EMPTY_CHAR;
 }

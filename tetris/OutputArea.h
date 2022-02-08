@@ -22,7 +22,7 @@ public:
 	// client part output
 	CRectangle& ClientPart() { return _area; };
 	// type
-	AreaType Type() { return _type; }
+	AreaType& Type() { return _type; }
 
 	bool IsType(AreaType type) { return _type == type; };
 

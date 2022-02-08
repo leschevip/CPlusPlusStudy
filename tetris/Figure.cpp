@@ -25,7 +25,7 @@ FigureInstance::FigureInstance(): _model(nullptr), _posCS(nullptr), _curPoints(n
 	_curPoints = new vector<Point>();
 }
 
-FigureInstance::FigureInstance(Figure* model, Point* posLcs) 
+FigureInstance::FigureInstance(Figure* const model, Point* const posLcs) 
 	: _model(model), _angle(0.0f)
 {
 	SetPosCS(*posLcs);
@@ -63,7 +63,7 @@ CRectangle& FigureInstance::Bounds()
 	return _bounds;
 }
 
-void FigureInstance::SetData(FigurePositionData data)
+void FigureInstance::SetData(const FigurePositionData& data)
 {
 	SetPosCS(data.pos);
 	SetAngle(data.Angle);
@@ -82,7 +82,7 @@ void FigureInstance::SetPosCS(const Point& pos)
 	}
 }
 
-void FigureInstance::SetAngle(const double angle)
+void FigureInstance::SetAngle(const double& angle)
 {
 	_angle = angle;
 }

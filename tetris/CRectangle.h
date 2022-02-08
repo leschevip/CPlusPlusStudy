@@ -16,18 +16,18 @@ class CRectangle
 			: _left(left), _top(top), _right(right), _bottom(bottom) {};
 
 		// width size in characters
-		inline int Width() { return Right() - Left() + 1; };
+		int Width() { return Right() - Left() + 1; };
 
 		// height size in characters
-		inline int Height() { return Bottom() - Top() + 1; };
+		int Height() { return Bottom() - Top() + 1; };
 
-		inline int Left() { return _left; };
+		int Left() { return _left; };
 
-		inline int Top() { return _top; };
+		int Top() { return _top; };
 
-		inline int Right() { return _right; };
+		int Right() { return _right; };
 
-		inline int Bottom() { return _bottom; };
+		int Bottom() { return _bottom; };
 
 		Point& LeftTop()
 		{
@@ -57,15 +57,7 @@ class CRectangle
 			_bottom += rightBottom.y;
 		}
 
-		/*
-		void MoveBy(int nx, int ny) 
-		{
-			_left += nx;
-			_top += ny;
-			_right += nx;
-			_bottom += ny;
-		}*/
-
+		
 		bool PointIn(const Point& p)
 		{
 			return p.x >= _left && p.x <= _right && p.y >= _top && p.y <= _bottom;

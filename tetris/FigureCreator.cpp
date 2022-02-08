@@ -94,7 +94,7 @@ Figure* Figure2()
 	return f;
 }
 
-Figure* FigureCreator::Create(FigureType typ)
+Figure* FigureCreator::Create(const FigureType& typ)
 {
 	if (typ == FigureType::F1)
 	{

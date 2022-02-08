@@ -7,5 +7,5 @@
 class FigureCreator
 {
 public:
-	static Figure* Create(FigureType typ);
+	static Figure* Create(const FigureType& typ);
 };

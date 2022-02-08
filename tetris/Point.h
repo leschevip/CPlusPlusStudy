@@ -1,15 +1,24 @@
 #pragma once
 #include "MVector.h"
 
+
 struct Point
 {
 public:
 	int x;
 	int y;
 
-	Point() : x(0), y(0) { }
+	Point()
+	{
+		x = 0;
+		y = 0;
+	}
 
-	Point(int nx, int ny) : x(nx), y(ny) { }
+	Point(int nx, int ny)
+	{ 
+		x = nx; 
+		y = ny; 
+	}
 
 	bool operator== (const Point& p)
 	{

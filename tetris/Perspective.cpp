@@ -1,19 +1,23 @@
 #include "Perspective.h"
 #include "CRectangle.h"
 
-const int HEIGHT_SCORE_PANEL = 3;
-const int WIDTH_PREWIEW_PANEL = 30;
+extern const uint32_t HEIGHT_SCORE_PANEL;
+extern const uint32_t WIDTH_PREWIEW_PANEL;
+extern const float H_FLOAT_MIN;
+extern const float H_FLOAT_MAX;
+extern const float V_FLOAT_MIN;
+extern const float V_FLOAT_MAX;
 
-Perspective::Perspective(CRectangle rect)
-    : _rect(rect), _left(0), _top(0), _right(1.0f), _bottom(1.0f), _charW(0), _charH(0), _maxCharWCount(0), _maxCharHCount(0)
+Perspective::Perspective(const CRectangle& rect)
+    : _rect(rect), _charW(0), _charH(0), _maxCharWCount(0), _maxCharHCount(0)
 {
     _charW = 1 / (float)(_rect.Width());
     _charH = 1 / (float)(_rect.Height());
 
-    Score = CreateOutputArea( AreaType::SCORE, 0.0f, 0.0f, 1.0f, HEIGHT_SCORE_PANEL * _charH);
-    Preview = CreateOutputArea(AreaType::PREVIEW, 1.0f - WIDTH_PREWIEW_PANEL * _charW, HEIGHT_SCORE_PANEL * _charH, 1.0f, 1.0f);
-    Game = CreateOutputArea(AreaType::GAME, 0.0f, HEIGHT_SCORE_PANEL * _charH, 1.0f - WIDTH_PREWIEW_PANEL * _charW, 1.0f);
-    Full = CreateOutputArea(AreaType::SCREEN, 0.0f, 0.0f, 1.0f, 1.0f);
+    Score = CreateOutputArea( AreaType::SCORE, H_FLOAT_MIN, V_FLOAT_MIN, H_FLOAT_MAX, HEIGHT_SCORE_PANEL * _charH);
+    Preview = CreateOutputArea(AreaType::PREVIEW, H_FLOAT_MAX - WIDTH_PREWIEW_PANEL * _charW, HEIGHT_SCORE_PANEL * _charH, H_FLOAT_MAX, V_FLOAT_MAX);
+    Game = CreateOutputArea(AreaType::GAME, H_FLOAT_MIN, HEIGHT_SCORE_PANEL * _charH, H_FLOAT_MAX - WIDTH_PREWIEW_PANEL * _charW, V_FLOAT_MAX);
+    Full = CreateOutputArea(AreaType::SCREEN, H_FLOAT_MIN, V_FLOAT_MIN, H_FLOAT_MAX, V_FLOAT_MAX);
 }
 
 Perspective::~Perspective()
@@ -38,17 +42,17 @@ float Perspective::CharH()
     return _charH;
 }
 
-int Perspective::MaxCharWidthCount()
+uint32_t Perspective::MaxCharWidthCount()
 {
     return _rect.Width();
 }
 
-int Perspective::MaxCharHeightCount()
+uint32_t Perspective::MaxCharHeightCount()
 {
     return _rect.Height();
 }
 
-OutputArea* Perspective::CreateOutputArea(AreaType type, float left, float top, float right, float bottom)
+OutputArea* Perspective::CreateOutputArea(const AreaType& type, const float& left, const float& top, const float& right, const float& bottom)
 {
     int l = left != 0 ? left / _charW - 1 : 0;
     int t = top != 0 ? top / _charH - 1 : 0;
@@ -59,7 +63,7 @@ OutputArea* Perspective::CreateOutputArea(AreaType type, float left, float top, 
     return area;
 }
 
-OutputArea* Perspective::Output(AreaType type)
+OutputArea* Perspective::Output(const AreaType& type)
 {
     switch (type)
     {

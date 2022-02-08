@@ -1,47 +1,5 @@
 #include "Engine.h"
 
-// HHOOK hook;
-Engine en;
-HANDLE hTimer = NULL;
-bool isGameEnd;
-/*
-LRESULT __stdcall HookCallback(int nCode, WPARAM wParam, LPARAM lParam)
-{
-	if (nCode >= 0)
-	{
-		if (wParam == WM_KEYDOWN)
-		{
- 			auto kbStruct = *((KBDLLHOOKSTRUCT*)lParam);
-  			en.ProccessInputKey(kbStruct.vkCode);
-		}
-	}
-
-	return CallNextHookEx(hook, nCode, wParam, lParam);
-}
-*/
-
-CRectangle GetConsoleViewPort(HWND hwnd, int x, int y, int w, int h)
-{
-	MoveWindow(hwnd, x, y, w, h, TRUE);
-	CONSOLE_SCREEN_BUFFER_INFO info;
-	!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
-	return CRectangle(info.srWindow.Left, info.srWindow.Top, info.srWindow.Right, info.srWindow.Bottom);
-}
-
-unsigned long _stdcall MainTimer(void*)
-{
-	int nCount = 0;
-	while (true)
-	{
-		WaitForSingleObject(hTimer, 1000);
-		isGameEnd = en.TickTack();
-		if (isGameEnd)
-			return 0;
-	}
-	return 0;
-}
-
-
 void Engine::InitComponents()
 {
 	if (_perspective == nullptr)
@@ -62,12 +20,12 @@ Engine::~Engine()
 	delete _perspective;
 }
 
-void Engine::SetPerspective(Perspective* p)
+void Engine::SetPerspective(Perspective * const p)
 {
 	_perspective = p;
 }
 
-int Engine::ProccessInputKey(int key)
+int Engine::ProccessInputKey(const int32_t& key)
 {
 	if (_data->IsEndGame())
 		return 1;
@@ -98,7 +56,7 @@ int Engine::ProccessInputKey(int key)
 
 // pos - новая позиция центра фигуры в системе координат игровой области.
 // angle - угол поворота фигуры
-void Engine::TrySetNextPosition(const MVector& vect, const double angle)
+void Engine::TrySetNextPosition(const MVector& vect, const double& angle)
 {
   	auto figure = _data->GameFigure();
 	auto gameAreaBounds = _perspective->Game->ClientPart();
@@ -149,41 +107,5 @@ int Engine::TickTack()
 		TrySetNextPosition(MVector(0, 1), 0);
 	}
 	_render->Rendering();
-	// else
-	//{
-	//	_render->RenderingEndGame();
-	//}
 	return isEnd;
-}
-
-void Engine::MainLoop(int x, int y, int w, int h)
-{
-	HWND hwnd = FindWindowA("ConsoleWindowClass", NULL);
-	ShowWindow(hwnd, 1);
-
-	en.SetPerspective(new Perspective(GetConsoleViewPort(hwnd, 100, 100, 1024, 768)));
-	en.InitComponents();
-	
-
-	DWORD tid;
-	hTimer = CreateEvent(NULL, FALSE, FALSE, NULL);
-	CreateThread(NULL, 0, MainTimer, NULL, 0, &tid);
-	SetEvent(hTimer);
-
-	MSG message;
-	while (true)
-	{
-		if (isGameEnd)
-		{
-			int key = getch();
-			if (key == 27)
-				break;
-		}
-		else
-		{
-			isGameEnd = en.ProccessInputKey(getch());
-		}
-	}
-	CloseHandle(hTimer);
-	hTimer = NULL;
 }

@@ -39,9 +39,6 @@
     <ClCompile Include="Render.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="common.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
@@ -71,9 +68,6 @@
     <ClInclude Include="Render.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="Point.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
@@ -81,9 +75,6 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="MVector.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Symbol.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="FigurePositionData.h">

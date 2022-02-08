@@ -1,6 +1,4 @@
 #pragma once
-#include "Point.h"
-
 
 struct MVector
 {

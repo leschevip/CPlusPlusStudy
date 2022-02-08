@@ -8,6 +8,7 @@
 
 using namespace std;
 
+
 int GetRandomNumber(int min, int max);
 
 CRectangle& GetVectorPointsBounds(vector<Point>& vector);

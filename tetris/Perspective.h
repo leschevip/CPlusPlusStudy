@@ -5,33 +5,31 @@
 
 using namespace std;
 
+
 class Perspective
 {
 
 private:
 	CRectangle _rect;
 
-	float _left;
-	float _top;
-	float _right;
-	float _bottom;
+	
 
 	float _charW;
 	float _charH;
 
-	int _maxCharWCount;
-	int _maxCharHCount;
+	uint32_t _maxCharWCount;
+	uint32_t _maxCharHCount;
 
-	OutputArea* CreateOutputArea(AreaType type, float left, float top, float right, float bottom);
+	OutputArea* CreateOutputArea(const AreaType& type, const float& left, const float& top, const float& right, const float& bottom);
 
 public:
-	Perspective(CRectangle rect);
+	Perspective(const CRectangle& rect);
 	~Perspective();
 	float CharW();
 	float CharH();
-	int MaxCharWidthCount();
-	int MaxCharHeightCount();
-	OutputArea* Output(AreaType type);
+	uint32_t MaxCharWidthCount();
+	uint32_t MaxCharHeightCount();
+	OutputArea* Output(const AreaType& type);
 
 	OutputArea* Score;
 	OutputArea* Game;

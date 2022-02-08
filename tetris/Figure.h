@@ -34,19 +34,19 @@ private:
 	CRectangle _bounds;
 
 	void SetPosCS(const Point& pos);
-	void SetAngle(const double angle);
+	void SetAngle(const double& angle);
 	void SetPoints(const vector<Point>& points);
 	void SetBounds(const CRectangle& bounds);
 
 public:
 	FigureInstance();
-	FigureInstance(Figure *model, Point* posLcs);
+	FigureInstance(Figure * const model, Point* const posLcs);
 	~FigureInstance();
 	Point* PosCS();
 	double Angle();
 	vector<Point>* Points();
 	Figure* Model();
 	CRectangle& Bounds();
-	void SetData(FigurePositionData data);
+	void SetData(const FigurePositionData& data);
 };
 
