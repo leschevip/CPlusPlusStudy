@@ -13,7 +13,7 @@ double_t RandomVal(const double_t& from, const double_t& to)
 }
 
 // удобно передавать константный указатель на изменяемый массив
-// и инициализировать статические массивы
+// и инициализировать массивы
 void InitRandArr(double_t* const arr, const double_t& from, const double_t& to, const uint32_t& SIZE)
 {
     srand(time(nullptr));
