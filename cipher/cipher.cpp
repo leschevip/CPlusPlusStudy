@@ -7,6 +7,48 @@ namespace CipherData
 	const size_t BUFFER_SIZE = 16'384; // byte count (2 Mb) per thread
 	//const size_t BUFFER_SIZE = 200; // byte count (2 Mb) per thread
 
+	unordered_map<char, char>* Cipher::getMapReplace(const CipherAction action, const size_t key)
+	{
+		constexpr int32_t left = numeric_limits<char>::min();
+		constexpr int32_t right = numeric_limits<char>::max();
+		const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);
+		srand(key);
+
+		auto *map = new unordered_map<char, char>();
+		for (int32_t i = left; i <= right; i++)
+		{
+			const auto coef = fraction * (right - left + 1) + left;
+			auto randChar = static_cast<char>(rand() * coef);
+			char key = action == CipherAction::Encrypt ? static_cast<char>(i) : randChar;
+			char val = action == CipherAction::Encrypt ? randChar : static_cast<char>(i);
+			map->insert({ key, val});
+		}
+		return map;
+	}
+
+	void Cipher::applyReplace(ifstream& file, unordered_map<char, char>* map)
+	{
+		file.seekg(0, ios::end);
+		size_t length = file.tellg();
+		file.seekg(0, ios::beg);
+		auto parts = ceil(static_cast<double>(length) / BUFFER_SIZE);
+		char** res = new char* [parts];
+		size_t curPos = 1;
+		for (size_t i = 0; i < parts; i++)
+		{
+			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos + 1);
+			char* buffer = new char[count];
+			file.read(buffer, count);
+			for (size_t k = 0; k < count; k++)
+				buffer[k] = map->at(buffer[k]);
+
+			res[i] = buffer;
+			curPos += count;
+		}
+
+		file.close();
+	}
+
 	CharMap* Cipher::getMaps(const int key)
 	{
 		CharMap* map = new CharMap();
@@ -71,11 +113,12 @@ namespace CipherData
 	{
 	}
 
-	void Cipher::Encrypt(const string filePath, const int key)
+	void Cipher::Encrypt(const string filePath, const size_t key)
 	{
-		CharMap* map = getMaps(key);
-
+		auto replMap = getMapReplace(CipherAction::Encrypt, key);
+		
 		ifstream f(filePath);
+		applyReplace(f, replMap);
 		f.seekg(0, ios::end);
 		size_t length = f.tellg();
 		f.seekg(0, ios::beg);
@@ -84,11 +127,12 @@ namespace CipherData
 		size_t curPos = 1;
 		for (size_t i = 0; i < parts; i++)
 		{
-			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos);
+			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos+1);
 			char* buffer = new char[count];
 			f.read(buffer, count);
-			
-			encryptReplace(buffer, count, map);
+			for (size_t k = 0; k < count; k++)
+				buffer[k] = replMap->at(buffer[k]);
+
 			res[i] = buffer;
 			curPos += count;
 		}
@@ -100,7 +144,7 @@ namespace CipherData
 		curPos = 1;
 		for (size_t i = 0; i < parts; i++)
 		{
-			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos);
+			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos + 1);
 			//fout.seekp(curPos);
 			fout.write(res[i], count);
 			curPos += count;

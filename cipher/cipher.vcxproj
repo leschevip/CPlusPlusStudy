@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClCompile Include="cipher.cpp" />
     <ClCompile Include="CipherContext.cpp" />
+    <ClCompile Include="CipherProcessor.cpp" />
     <ClCompile Include="getopt.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -149,6 +150,7 @@
     <ClInclude Include="cipher.h" />
     <ClInclude Include="CipherAction.h" />
     <ClInclude Include="CipherContext.h" />
+    <ClInclude Include="CipherProcessor.h" />
     <ClInclude Include="getopt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
