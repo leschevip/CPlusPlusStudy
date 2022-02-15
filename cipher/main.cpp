@@ -29,9 +29,9 @@ int main(size_t n, char** args)
 
 		FileCipher c(path.Val);
 		if (cmdOpt.Key == ENCRYPT_COMMAND)
-			c.Encrypt(stoi(key.Val));
+			c.Encrypt(stoll(key.Val));
 		else
-			c.Decrypt(stoi(key.Val));
+			c.Decrypt(stoll(key.Val));
 
 		/*
 		const string path("C:\\Users\\lesch\\Documents\\Visual Studio 2019\\file.txt");

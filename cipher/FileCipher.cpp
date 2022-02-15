@@ -2,7 +2,7 @@
 
 namespace CipherData
 {
-	void FileCipher::ExecAction(CipherAction action, size_t key)
+	void FileCipher::ExecAction(CipherAction action, long long key)
 	{
 		PrintAction(action);
 
@@ -22,23 +22,23 @@ namespace CipherData
 		}
 	}
 
-	FileCipher::FileCipher(const string filePath) : FileCipher(filePath, "", true)
+	FileCipher::FileCipher(const string& filePath) : FileCipher(filePath, "", true)
 	{
 	}
 
-	FileCipher::FileCipher(const string filePath, const string logPath, const bool disableLogging) : Cipher(logPath, disableLogging)
+	FileCipher::FileCipher(const string& filePath, const string logPath, const bool disableLogging) : Cipher(logPath, disableLogging)
 	{
 		_buffer = (CipherBuffer*)(new FileCipherBuffer(filePath));
 	}
 	
-	void FileCipher::Encrypt(const size_t key)
+	void FileCipher::Encrypt(const long long key)
 	{
 		_buffer->Reset();
 		ExecAction(CipherAction::Encrypt, key);
 		_buffer->SaveData();
 	}
 
-	void FileCipher::Decrypt(const size_t key)
+	void FileCipher::Decrypt(const long long key)
 	{
 		_buffer->Reset();
 		ExecAction(CipherAction::Decrypt, key);

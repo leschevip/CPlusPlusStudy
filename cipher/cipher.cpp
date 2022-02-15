@@ -3,22 +3,31 @@
 
 namespace CipherData
 {
-	void Cipher::getMap(const CipherAction action, const size_t key, OUT unordered_map<char, char>* mapReplace, OUT PermutationMap* mapPermutation)
+	int32_t getRandomNum(long long seed, int32_t min, int32_t max)
+	{
+		//const static auto seed = chrono::system_clock::now().time_since_epoch().count();
+		static mt19937_64 generator(seed);
+		uniform_int_distribution<int32_t> dis(min, max);
+		return dis(generator);
+	}
+
+	void Cipher::getMap(const CipherAction action, const long long key, OUT unordered_map<char, char>* mapReplace, OUT PermutationMap* mapPermutation)
 	{
 		constexpr int32_t left = numeric_limits<char>::min();
 		constexpr int32_t right = numeric_limits<char>::max();
-		constexpr int32_t length = right - left;
-		const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);
-		srand(key);
+		//constexpr int32_t length = right - left;
+		//const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);
+		//srand(key);
 
 		vector<char> rands;
-		const auto coef = fraction * (right - left + 1) + left;
+		//const auto coef = fraction * (right - left + 1) + left;
 		int32_t nextChar = left;
 		int32_t index = 0;
 
 		while (nextChar <= right)
 		{
-			auto randChar = static_cast<char>(rand() * coef);
+			//auto randChar = static_cast<char>(rand() * coef);
+			auto randChar = static_cast<char>(getRandomNum(key, left, right));
 			if (find(rands.begin(), rands.end(), randChar) == rands.end())
 			{
 				rands.push_back(randChar);
@@ -103,7 +112,7 @@ namespace CipherData
 		_log.close();
 	}
 
-	Cipher::Cipher(const string logPath, const bool disableLogging) : _logPath(logPath), _disableLogging(disableLogging), _buffer(nullptr)
+	Cipher::Cipher(const string& logPath, const bool disableLogging) : _logPath(logPath), _disableLogging(disableLogging), _buffer(nullptr)
 	{
 		_log = ofstream(logPath);
 	}

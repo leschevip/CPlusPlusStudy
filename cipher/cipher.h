@@ -5,6 +5,8 @@
 #include <fstream>
 #include <unordered_map>
 #include <map>
+#include <chrono>
+#include <random>
 #include "CipherAction.h"
 #include "CipherBuffer.h"
 #include "FileCipherBuffer.h"
@@ -32,17 +34,17 @@ namespace CipherData
 		ofstream _log;
 		CipherBuffer* _buffer;
 		bool _disableLogging;
-		void getMap(const CipherAction action, const size_t key, OUT unordered_map<char, char>* mapReplace, OUT PermutationMap* mapPermutation);
+		void getMap(const CipherAction action, const long long key, OUT unordered_map<char, char>* mapReplace, OUT PermutationMap* mapPermutation);
 		void applyReplace(const BufferData* const data, const unordered_map<char, char>* const map);
 		void applyPermutation(const BufferData* const data, const PermutationMap* const map);
 	public:
 		Cipher();
 		~Cipher();
-		Cipher(const string logPath, const bool disableLogging);
+		Cipher(const string& logPath, const bool disableLogging);
 		void PrintAction(const CipherAction action);
 		void PrintMapReplace(const unordered_map<char, char>* const map);
 		void PrintBuffer(const BufferData* const data, const string header);
-		virtual void Encrypt(const size_t key) = 0;
-		virtual void Decrypt(const size_t key) = 0;
+		virtual void Encrypt(const long long key) = 0;
+		virtual void Decrypt(const long long key) = 0;
 	};
 }
