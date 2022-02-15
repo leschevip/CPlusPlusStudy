@@ -29,9 +29,9 @@ Option getopt(vector<Option>& options, const char* argk)
 
 vector<Option> getopt(char** args, const size_t size)
 {	
-	size_t i(0);
+	size_t i(1);
 	// check first par. It can't be value
-	if (args[i + 1][0] != COMMAND_MARKER)
+	if (args[i][0] != COMMAND_MARKER)
 	{
 		throw invalid_argument("First argument must be a parameter");
 	}
@@ -40,7 +40,6 @@ vector<Option> getopt(char** args, const size_t size)
 	
 	do
 	{
-		i++;
 		if (args[i][0] == COMMAND_MARKER)
 		{
 			string key(args[i]);
@@ -57,6 +56,7 @@ vector<Option> getopt(char** args, const size_t size)
 		{
 			throw invalid_argument("Invalid parameter " + string(args[i]));
 		}
+		i++;
 	} 
 	while (i < size-1);
 

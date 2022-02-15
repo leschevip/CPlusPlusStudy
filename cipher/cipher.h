@@ -1,38 +1,48 @@
 #pragma once
 #include <string>
+#include <functional>
 #include <stdexcept>
 #include <fstream>
 #include <unordered_map>
-#include "CipherContext.h"
+#include <map>
+#include "CipherAction.h"
+#include "CipherBuffer.h"
+#include "FileCipherBuffer.h"
 
 
 using namespace std;
 
 namespace CipherData
 {	
-	struct CharMap
+	class PermutationMap
 	{
-		char Origin[255];
-		char Replace[255];
-		unsigned char Permutation[255];
+	public:
+		int32_t CountPerBlock;
+		int32_t* Origin;
+		int32_t* Permutation;
+
+		PermutationMap();
+		~PermutationMap();
 	};
 
 	class Cipher
 	{
-	private:
-		ofstream& _flog;
-		unordered_map<char, char>* getMapReplace(const CipherAction action, const size_t key);
-		void applyReplace(ifstream& file, unordered_map<char, char>* map);
-
-		CharMap* getMaps(const int key);
-		void encryptReplace(char* buff, size_t size, CharMap* map);
-		void decryptReplace(char* buff, size_t size, CharMap* map);
-		void encryptPermutation(char* buff, size_t size, char* permutation);
+	protected:
+		string _logPath;
+		ofstream _log;
+		CipherBuffer* _buffer;
+		bool _disableLogging;
+		void getMap(const CipherAction action, const size_t key, OUT unordered_map<char, char>* mapReplace, OUT PermutationMap* mapPermutation);
+		void applyReplace(const BufferData* const data, const unordered_map<char, char>* const map);
+		void applyPermutation(const BufferData* const data, const PermutationMap* const map);
 	public:
-		//Cipher();
-		Cipher(ofstream& flog);
-		void Encrypt(const string filePath, const size_t key);
-		void Decrypt(const string filePath, const size_t key);
-		void Execute(const CipherContext context);
+		Cipher();
+		~Cipher();
+		Cipher(const string logPath, const bool disableLogging);
+		void PrintAction(const CipherAction action);
+		void PrintMapReplace(const unordered_map<char, char>* const map);
+		void PrintBuffer(const BufferData* const data, const string header);
+		virtual void Encrypt(const size_t key) = 0;
+		virtual void Decrypt(const size_t key) = 0;
 	};
 }

@@ -1,207 +1,163 @@
 #include "cipher.h"
-#include <io.h>
 
 
 namespace CipherData
 {
-	const size_t BUFFER_SIZE = 16'384; // byte count (2 Mb) per thread
-	//const size_t BUFFER_SIZE = 200; // byte count (2 Mb) per thread
-
-	unordered_map<char, char>* Cipher::getMapReplace(const CipherAction action, const size_t key)
+	void Cipher::getMap(const CipherAction action, const size_t key, OUT unordered_map<char, char>* mapReplace, OUT PermutationMap* mapPermutation)
 	{
 		constexpr int32_t left = numeric_limits<char>::min();
 		constexpr int32_t right = numeric_limits<char>::max();
+		constexpr int32_t length = right - left;
 		const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);
 		srand(key);
 
-		auto *map = new unordered_map<char, char>();
-		for (int32_t i = left; i <= right; i++)
+		vector<char> rands;
+		const auto coef = fraction * (right - left + 1) + left;
+		int32_t nextChar = left;
+		int32_t index = 0;
+
+		while (nextChar <= right)
 		{
-			const auto coef = fraction * (right - left + 1) + left;
 			auto randChar = static_cast<char>(rand() * coef);
-			char key = action == CipherAction::Encrypt ? static_cast<char>(i) : randChar;
-			char val = action == CipherAction::Encrypt ? randChar : static_cast<char>(i);
-			map->insert({ key, val});
-		}
-		return map;
-	}
+			if (find(rands.begin(), rands.end(), randChar) == rands.end())
+			{
+				rands.push_back(randChar);
+				if (action == CipherAction::Encrypt)
+				{
+					mapReplace->insert({ nextChar, randChar });
+				}
+				else
+				{
+					mapReplace->insert({ randChar, nextChar  });
+				}
+				
+				index++;
 
-	void Cipher::applyReplace(ifstream& file, unordered_map<char, char>* map)
-	{
-		file.seekg(0, ios::end);
-		size_t length = file.tellg();
-		file.seekg(0, ios::beg);
-		auto parts = ceil(static_cast<double>(length) / BUFFER_SIZE);
-		char** res = new char* [parts];
-		size_t curPos = 1;
-		for (size_t i = 0; i < parts; i++)
+				nextChar++;
+			}
+		}
+
+		string str = to_string(key);
+		mapPermutation->CountPerBlock = str.size();
+		mapPermutation->Origin = new int32_t[mapPermutation->CountPerBlock];
+		mapPermutation->Permutation = new int32_t[mapPermutation->CountPerBlock];
+		int32_t inc(0);
+		size_t t(0);
+		for (size_t i = 0; i < 10; i++)
 		{
-			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos + 1);
-			char* buffer = new char[count];
-			file.read(buffer, count);
-			for (size_t k = 0; k < count; k++)
-				buffer[k] = map->at(buffer[k]);
-
-			res[i] = buffer;
-			curPos += count;
+			size_t k = str.find(to_string(i));
+			while (k != string::npos)
+			{
+				if (action == CipherAction::Encrypt)
+				{
+					mapPermutation->Origin[k] = inc;
+					mapPermutation->Permutation[t++] = inc;
+				}
+				else
+				{
+					mapPermutation->Permutation[k] = inc;
+					mapPermutation->Origin[t++] = inc;
+				}
+				
+				k = str.find(to_string(i), k + 1);
+				inc++;
+			}
 		}
 
-		file.close();
 	}
 
-	CharMap* Cipher::getMaps(const int key)
+	void Cipher::applyReplace(const BufferData* const data, const unordered_map<char, char>* const map)
 	{
-		CharMap* map = new CharMap();
-		constexpr int32_t left = numeric_limits<char>::min();
-		constexpr int32_t right = numeric_limits<char>::max();
-		const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);
-		srand(key);
-
-		for (int32_t i = 0; i < right - left; i++)
-		{
-			map->Origin[i] = i + left;
-
-			const auto coef = fraction * (right - left + 1) + left;
-			map->Replace[i] = static_cast<char>(rand() * coef);
-		}
-
-		constexpr int32_t uleft = numeric_limits<unsigned char>::min();
-		constexpr int32_t uright = numeric_limits<unsigned char>::max();
-		for (int32_t i = 0; i < right - uleft; i++)
-		{
-			const auto coef = fraction * (uright - uleft + 1) + uleft;
-			map->Permutation[i] = static_cast<char>(rand() * coef);
-		}
-		
-		return map;
+		for (size_t k = 0; k < data->Count; k++)
+			data->Buffer[k] = map->at(data->Buffer[k]);
 	}
 
-	void Cipher::encryptReplace(char* buff, size_t size, CharMap* map)
+	void Cipher::applyPermutation(const BufferData* const data, const PermutationMap* const map)
 	{
-		for (size_t i = 0; i < size; i++)
+		size_t parts = ceil(static_cast<double>(data->Count) / map->CountPerBlock);
+		size_t shift(0);
+		char* tmp = new char[map->CountPerBlock];
+		for (size_t p = 0; p < parts - 1; p++)
 		{
-			for (size_t k = 0; k < 255; k++)
-				if (buff[i] == map->Origin[k])
-					buff[i] ^= map->Replace[k];
+			for (size_t d = 0; d < map->CountPerBlock; d++)
+			{
+				tmp[map->Permutation[d]] = data->Buffer[shift + map->Origin[d]];
+			}
+
+			for (size_t d = 0; d < map->CountPerBlock; d++)
+			{
+				data->Buffer[shift + d] = tmp[d];
+			}
+			shift += map->CountPerBlock;
 		}
-			
+
+		delete[] tmp;
 	}
 
-	void Cipher::decryptReplace(char* buff, size_t size, CharMap* map)
-	{
-		for (size_t i = 0; i < size; i++)
-		{
-			for (size_t k = 0; k < 255; k++)
-				if (buff[i] == map->Replace[k])
-					buff[i] ^= map->Origin[k];
-		}
-			
-	}
-
-	void Cipher::encryptPermutation(char* buff, size_t size, char* permutation)
-	{
-		const constexpr int32_t charMin = numeric_limits<char>::min();
-		const int32_t left = abs(charMin);
-		for (size_t i = 0; i < size; i++)
-			buff[i] = permutation[i];
-	}
-
-	
-	//Cipher::Cipher() { }
-
-	Cipher::Cipher(ofstream& flog) : _flog(flog)
+	Cipher::Cipher() : _buffer(nullptr), _disableLogging(true)
 	{
 	}
 
-	void Cipher::Encrypt(const string filePath, const size_t key)
+	Cipher::~Cipher()
 	{
-		auto replMap = getMapReplace(CipherAction::Encrypt, key);
-		
-		ifstream f(filePath);
-		applyReplace(f, replMap);
-		f.seekg(0, ios::end);
-		size_t length = f.tellg();
-		f.seekg(0, ios::beg);
-		auto parts = ceil(static_cast<double>(length) / BUFFER_SIZE);
-		char** res = new char* [parts];
-		size_t curPos = 1;
-		for (size_t i = 0; i < parts; i++)
-		{
-			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos+1);
-			char* buffer = new char[count];
-			f.read(buffer, count);
-			for (size_t k = 0; k < count; k++)
-				buffer[k] = replMap->at(buffer[k]);
-
-			res[i] = buffer;
-			curPos += count;
-		}
-
-		f.close();
-		
-		//ofstream fout("C:\\Users\\lesch\\Documents\\Visual Studio 2019\\out");
-		ofstream fout(filePath);
-		curPos = 1;
-		for (size_t i = 0; i < parts; i++)
-		{
-			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos + 1);
-			//fout.seekp(curPos);
-			fout.write(res[i], count);
-			curPos += count;
-		}
-		fout.close();
-
-		ifstream f1(filePath);
-		f1.seekg(0, ios::end);
-		length = f1.tellg();
-		f1.seekg(0, ios::beg);
-		f1.close();
+		_log.close();
 	}
 
-	void Cipher::Decrypt(const string filePath, const int key)
+	Cipher::Cipher(const string logPath, const bool disableLogging) : _logPath(logPath), _disableLogging(disableLogging), _buffer(nullptr)
 	{
-		CharMap* map = getMaps(key);
-
-		ifstream f(filePath);
-		f.seekg(0, ios::end);
-		size_t length = f.tellg();
-		f.seekg(0, ios::beg);
-		auto parts = ceil(static_cast<double>(length) / BUFFER_SIZE);
-		char** res = new char* [parts];
-		size_t curPos = 1;
-		for (size_t i = 0; i < parts; i++)
-		{
-			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos);
-			char* buffer = new char[count];
-			f.read(buffer, count);
-
-			decryptReplace(buffer, count, map);
-			res[i] = buffer;
-			curPos += count;
-		}
-
-		f.close();
-
-		ofstream fout(filePath);
-		curPos = 1;
-		for (size_t i = 0; i < parts; i++)
-		{
-			const auto count = (length - curPos > BUFFER_SIZE ? BUFFER_SIZE : length - curPos);
-			//fout << res[i];
-			//fout.seekp(curPos);
-			fout.write(res[i], count);
-			curPos += count;
-		}
-
-		fout.close();
+		_log = ofstream(logPath);
 	}
 
-	void Cipher::Execute(CipherContext context)
+	void Cipher::PrintAction(const CipherAction action)
 	{
-		if (context.Action == CipherAction::Encrypt)
-			Encrypt(context.FilePath, context.Key);
-		if (context.Action == CipherAction::Decrypt)
-			Decrypt(context.FilePath, context.Key);
+		if (!_disableLogging && _log.is_open())
+		{
+			_log << "Action: " << (int)action << endl;
+		}
+	}
+
+	void Cipher::PrintMapReplace(const unordered_map<char, char>* const map)
+	{
+		if (!_disableLogging && _log.is_open())
+		{
+			_log << "Map Replace:" << endl;
+			_log << "From (For): ";
+			auto iter = map->begin();
+			while (iter != map->end())
+			{
+				_log << (int32_t)(*iter).first << "(" << (*iter).first << ") for " << (int32_t)(*iter).second << "(" << (*iter).second << ")";
+				_log << endl;
+				iter++;
+			}
+			_log << endl;
+		}
+	}
+
+	void Cipher::PrintBuffer(const BufferData* const data, const string header)
+	{
+		if (!_disableLogging && _log.is_open())
+		{
+			_log.width();
+			_log << header << "buffer:" << endl;
+			//_log.width(6);
+			for (size_t i = 0; i < data->Count; i++)
+				_log << (int32_t)data->Buffer[i] << "  ";
+
+			_log.width();
+			_log << endl;
+		}
+	}
+
+	PermutationMap::PermutationMap() : Origin(nullptr), Permutation(nullptr), CountPerBlock(0)
+	{
+	}
+
+	PermutationMap::~PermutationMap()
+	{
+		delete[] Origin;
+		Origin = nullptr;
+		delete[] Permutation;
+		Permutation = nullptr;
 	}
 
 }
