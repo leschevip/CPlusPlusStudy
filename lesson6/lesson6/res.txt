@@ -1,0 +1,9 @@
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+The class template basic_ofstream implements high-level output operations on file based streams. It interfaces a file-based streambuffer (std::basic_filebuf) with the high-level interface of (std::basic_ostream).
+A typical implementation of std::basic_ofstream holds only one non - derived data member : an instance of
