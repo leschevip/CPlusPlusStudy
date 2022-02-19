@@ -7,8 +7,8 @@ using namespace mylib;
 
 void Task1and5()
 {
-    cout << "Task1" << endl;
-    const size_t SIZE = InputNumber<size_t>(NAME_OF(SIZE));
+    cout << "Task1and5" << endl;
+    const size_t SIZE = GET_ARRAY_SIZE;
     float* arr = InitArr(SIZE);
     cout << "Array: ";
     PrintArr(arr, SIZE);
@@ -35,19 +35,32 @@ void Task3()
 {
     cout << "Task3" << endl;
     const size_t SIZE = GET_ARRAY_SIZE;
-    int* arr = InputNewArrayNumber<int>("Create array from keyboard:", SIZE);
+    int* arr = InputNewArrayNumber<int32_t>("Create array:", SIZE);
+    cout << "Before sort:" << endl;
+    PrintArr(arr, SIZE);
+    SortArr(arr, SIZE);
+    cout << "After sort:" << endl;
     PrintArr(arr, SIZE);
 
     delete[] arr;
     cout << endl;
 }
 
+void Task4()
+{
+    cout << "Task4" << endl;
+    Employee* empl = NewEmployee();
+    cout << " size of employee: " << sizeof(*empl) << endl;
+    string filename = InputString("file name for employee");
+    SaveEmployeeToFile(filename, empl);
+    delete empl;
+    cout << endl;
+}
 
 int main()
 {
- //   Task1and5();
-    
- //   Task2();
-
+    Task1and5();   
+    Task2();
     Task3();
+    Task4();
 }

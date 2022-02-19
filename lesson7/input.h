@@ -84,7 +84,7 @@ namespace input
 
         for (size_t i = 0; i < size; i++)
         {
-            arr[i] = GetInput<T>("array[" + to_string(i) + "]", check);
+            arr[i] = GetInput<T>("v[" + to_string(i) + "]", check);
         }
 
         cout << endl;
