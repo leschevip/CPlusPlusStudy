@@ -1,0 +1,8 @@
+LIBRARY "homework"
+	DESCRIPTION	'homework'
+
+EXPORTS
+	Task1and5	@1
+	Task2		@2
+	Task3		@3
+	Task4		@4
