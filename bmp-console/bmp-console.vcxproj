@@ -141,9 +141,6 @@
   <ItemGroup>
     <ClCompile Include="bmp-console.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Rect.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

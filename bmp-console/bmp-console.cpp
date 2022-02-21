@@ -8,7 +8,6 @@
 #include <fstream>
 #include <windows.h>
 #include <vector>
-#include "Rect.h"
 
 #pragma warning(disable: 26451 6386 6385)
 
@@ -18,6 +17,14 @@ typedef unsigned short ushort;
 using namespace std;
 
 const ushort BMPTYPE = 0x4D42;
+
+struct Rect
+{
+    int32_t Xmin;
+    int32_t Ymin;
+    int32_t Xmax;
+    int32_t Ymax;
+};
 
 struct Bmp24bitData
 {
