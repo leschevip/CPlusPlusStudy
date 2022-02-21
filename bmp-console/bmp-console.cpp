@@ -1,5 +1,7 @@
 ﻿// bmp-console.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
 //
+#define NOMINMAX
+
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -20,8 +22,6 @@ const ushort BMPTYPE = 0x4D42;
 struct Bmp24bitData
 {
     ifstream* fin;
-    size_t pos;
-    size_t len;
     BITMAPINFOHEADER fileInfo;
     BITMAPFILEHEADER file;
     RGBTRIPLE** colors;
@@ -58,16 +58,13 @@ Bmp24bitData* GetBmp24bitInfo(const string& filePath)
         dataPtr->fin->read((char*)&dataPtr->file, sizeof(BITMAPFILEHEADER));
         if (dataPtr->file.bfType == BMPTYPE)
         {
-            const size_t PALLETE_SIZE = 1024;
             const size_t BIT24 = 24;
             dataPtr->fin->read((char*)&dataPtr->fileInfo, sizeof(BITMAPINFOHEADER));
 
             if (dataPtr->fileInfo.biBitCount != BIT24)
                 throw new exception("not supported");
 
-            dataPtr->pos = static_cast<size_t>(dataPtr->fin->tellg()) + PALLETE_SIZE * sizeof(BYTE);
-            dataPtr->len = dataPtr->fileInfo.biSizeImage;
-            dataPtr->fin->seekg(dataPtr->pos, ios::beg);
+            dataPtr->fin->seekg(dataPtr->file.bfOffBits, ios::beg);
             dataPtr->colors = new RGBTRIPLE * [dataPtr->fileInfo.biHeight];
 
             const size_t shiftBytes = dataPtr->fileInfo.biWidth % 4;
@@ -76,9 +73,11 @@ Bmp24bitData* GetBmp24bitInfo(const string& filePath)
             {
                 dataPtr->colors[k] = new RGBTRIPLE[dataPtr->fileInfo.biWidth];
                 dataPtr->fin->read((char*)dataPtr->colors[k], dataPtr->fileInfo.biWidth * sizeof(RGBTRIPLE));
-                dataPtr->fin->seekg(shiftBytes, ios::cur);
+                if (shiftBytes != 0)
+                    dataPtr->fin->seekg(shiftBytes, ios::cur);
                 k++;
             }
+            
         }
         else
         {
@@ -99,35 +98,43 @@ Bmp24bitData* GetBmp24bitInfo(const string& filePath)
 
 
 
-void GetSymbolPositions(/*const size_t maxPixelsCount, */const size_t pixels, const size_t symbolCount, Position* pos)
+void GetSymbolPositions(const size_t pixels, const size_t symbolCount, Position* pos)
 {
     size_t leaf;
     size_t count(0);
     if (pixels >= symbolCount)
     {
         count = static_cast<size_t>(floor(static_cast<double>(pixels) / symbolCount));
-        //size_t k(0);
+        size_t k(0);
         for (size_t i = 0; i < symbolCount; i++)
         {
-            pos[i] = { i * count, count };
-            /*for (size_t p = 0; p < count; p++)
-                pos[i].idx.push_back(k);*/
+            for (size_t p = 0; p < count; p++)
+            {
+                pos[i].idx.push_back(k);
+                k++;
+            }
         }
             
-
         leaf = pixels - count * symbolCount;
     }
     else
     {
-        auto idx = static_cast<size_t>(ceil(static_cast<double>(symbolCount) / pixels));
-        for (size_t i = idx - 1; i < symbolCount; i += idx)
+        auto count = static_cast<size_t>(ceil(static_cast<double>(symbolCount) / pixels));
+        for (size_t i = count - 1; i < symbolCount; i += count)
         {
-            pos[i].len++;
-            for (size_t k = i + 1; k < symbolCount; k++)
-                pos[k].pos++;
+            size_t k = pos[i].idx.at(pos[i].idx.size() - 1) + 1;
+            pos[i].idx.push_back(k);
+
+            for (size_t t = i + 1; t < symbolCount; t++)
+            {
+                for (size_t g = 0; g < pos[t].idx.size(); g++)
+                {
+                    pos[t].idx[g]++;
+                }
+            }
         }
 
-        leaf = pixels - symbolCount / idx;
+        leaf = pixels - symbolCount / count;
     }
     
     if (leaf != 0)
@@ -136,9 +143,14 @@ void GetSymbolPositions(/*const size_t maxPixelsCount, */const size_t pixels, co
     }
 }
 
-void OutputBmp(const string& filePath, const Rect& output)
+void OutputBmp(const string& filePath, Rect& output)
 {
     auto data = GetBmp24bitInfo(filePath);
+
+    if (data->fileInfo.biWidth <= output.Xmax - output.Xmin + 1)
+        output.Xmax = data->fileInfo.biWidth - 1;
+    if (data->fileInfo.biHeight <= output.Ymax - output.Ymin + 1)
+        output.Ymax = data->fileInfo.biHeight - 1;
 
     Position* xPositions = new Position[output.Xmax - output.Xmin + 1];
     Position* yPositions = new Position[output.Ymax - output.Ymin + 1];
@@ -154,9 +166,10 @@ void OutputBmp(const string& filePath, const Rect& output)
         {
             auto xPos = xPositions[x];
             char ch(' ');
-            for (size_t h = yPos.pos; h < (yPos.pos + yPos.len); h++)
+
+            for (auto h : yPos.idx)
             {
-                for (size_t w = xPos.pos; w < (xPos.pos + xPos.len); w++)
+                for (auto w : xPos.idx)
                 {
                     auto color = data->colors[h][w];
                     if (color.rgbtBlue == 0 && color.rgbtGreen == 0 && color.rgbtRed == 0)
@@ -187,7 +200,34 @@ Rect GetOutputWindow(const int x, const int y, const int w, const int h)
 
 int main()
 {
-    auto output = GetOutputWindow(0, 0, 1024, 768);
-    OutputBmp("1.bmp", output);
+    string fname;
+    const string Y = "y";
+    const string N = "n";
+    while (true)
+    {
+        system("cls");
+        cout << "Input file name: ";
+        cin >> fname;
+
+        auto output = GetOutputWindow(150, 100, 1024, 768);
+        OutputBmp(fname, output);
+        string retry = Y;
+        while (true)
+        {
+            cout << "Do you want to try other file? ("<< Y << "/" << N << "):";
+            cin >> retry;
+            if (retry != Y && retry != N)
+            {
+                cout << "Try again to answer, please" << endl;
+            }
+            else
+            {
+                break;
+            }    
+        }
+        if (retry == N)
+            break;
+    }
+    
     return 0;
 }

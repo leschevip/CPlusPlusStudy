@@ -2,8 +2,8 @@
 
 struct Rect
 {
-	short Xmin;
-	short Ymin;
-	short Xmax;
-	short Ymax;
+	int32_t Xmin;
+	int32_t Ymin;
+	int32_t Xmax;
+	int32_t Ymax;
 };
