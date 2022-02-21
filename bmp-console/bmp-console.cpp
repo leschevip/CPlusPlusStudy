@@ -42,9 +42,12 @@ struct Bmp24bitData
 
 struct Position
 {
-    size_t pos;
-    size_t len;
     vector<size_t> idx;
+
+    ~Position()
+    {
+        idx.clear();
+    }
 };
 
 Bmp24bitData* GetBmp24bitInfo(const string& filePath)
@@ -94,9 +97,6 @@ Bmp24bitData* GetBmp24bitInfo(const string& filePath)
         return nullptr;
     }
 }
-
-
-
 
 void GetSymbolPositions(const size_t pixels, const size_t symbolCount, Position* pos)
 {
@@ -186,6 +186,8 @@ void OutputBmp(const string& filePath, Rect& output)
     }
 
     delete data;
+    delete xPositions;
+    delete yPositions;
 }
 
 Rect GetOutputWindow(const int x, const int y, const int w, const int h)
