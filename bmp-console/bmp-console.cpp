@@ -164,6 +164,8 @@ void OutputBmp(const string& filePath, Rect& output)
     GetSymbolPositions(data->fileInfo.biWidth, output.Xmax - output.Xmin + 1, xPositions);
     GetSymbolPositions(data->fileInfo.biHeight, output.Ymax - output.Ymin + 1, yPositions);
 
+    const char space = ' ';
+    const char pixel = '@';
     char** chars = new char*[output.Ymax - output.Ymin + 1];
     for (size_t y = output.Ymin; y <= output.Ymax; y++)
     {
@@ -172,7 +174,7 @@ void OutputBmp(const string& filePath, Rect& output)
         for (size_t x = output.Xmin; x <= output.Xmax; x++)
         {
             auto xPos = xPositions[x];
-            char ch(' ');
+            char ch(space);
 
             for (auto h : yPos.idx)
             {
@@ -181,7 +183,7 @@ void OutputBmp(const string& filePath, Rect& output)
                     auto color = data->colors[h][w];
                     if (color.rgbtBlue == 0 && color.rgbtGreen == 0 && color.rgbtRed == 0)
                     {
-                        ch = '@';
+                        ch = pixel;
                         goto print;
                     }
                 }
