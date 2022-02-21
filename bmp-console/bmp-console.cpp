@@ -195,8 +195,8 @@ void OutputBmp(const string& filePath, Rect& output)
     }
 
     delete data;
-    delete xPositions;
-    delete yPositions;
+    delete[] xPositions;
+    delete[] yPositions;
 }
 
 Rect GetOutputWindow(const int x, const int y, const int w, const int h)
