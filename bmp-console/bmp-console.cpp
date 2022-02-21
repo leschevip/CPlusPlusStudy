@@ -8,6 +8,8 @@
 #include <vector>
 #include "Rect.h"
 
+#pragma warning(disable: 26451 6386 6385)
+
 typedef unsigned char BYTE;
 typedef unsigned short ushort;
 
@@ -28,6 +30,13 @@ struct Bmp24bitData
     {
         fin->close();
         fin = nullptr;
+        if (colors != nullptr)
+        {
+            for (size_t i = 0; i < fileInfo.biHeight; i++)
+                delete colors[i];
+            delete colors;
+        }
+        colors = nullptr;
     }
 };
 
@@ -35,14 +44,7 @@ struct Position
 {
     size_t pos;
     size_t len;
-};
-
-struct SymbolBox
-{
-    size_t x;
-    size_t xCount;
-    size_t y;
-    size_t yCount;
+    vector<size_t> idx;
 };
 
 Bmp24bitData* GetBmp24bitInfo(const string& filePath)
@@ -56,15 +58,26 @@ Bmp24bitData* GetBmp24bitInfo(const string& filePath)
         dataPtr->fin->read((char*)&dataPtr->file, sizeof(BITMAPFILEHEADER));
         if (dataPtr->file.bfType == BMPTYPE)
         {
+            const size_t PALLETE_SIZE = 1024;
+            const size_t BIT24 = 24;
             dataPtr->fin->read((char*)&dataPtr->fileInfo, sizeof(BITMAPINFOHEADER));
-            dataPtr->pos = static_cast<size_t>(dataPtr->fin->tellg()) + 1024 * sizeof(BYTE);
-            dataPtr->len = dataPtr->fileInfo.biSize - dataPtr->pos;
 
+            if (dataPtr->fileInfo.biBitCount != BIT24)
+                throw new exception("not supported");
+
+            dataPtr->pos = static_cast<size_t>(dataPtr->fin->tellg()) + PALLETE_SIZE * sizeof(BYTE);
+            dataPtr->len = dataPtr->fileInfo.biSizeImage;
+            dataPtr->fin->seekg(dataPtr->pos, ios::beg);
             dataPtr->colors = new RGBTRIPLE * [dataPtr->fileInfo.biHeight];
-            for (size_t y = 0; y < dataPtr->fileInfo.biHeight; y++)
+
+            const size_t shiftBytes = dataPtr->fileInfo.biWidth % 4;
+            size_t k(0);
+            for (int32_t y = dataPtr->fileInfo.biHeight - 1; y >= 0 ; y--)
             {
-                dataPtr->colors[y] = new RGBTRIPLE[dataPtr->fileInfo.biWidth];
-                dataPtr->fin->read((char*)dataPtr->colors[y], dataPtr->fileInfo.biWidth * sizeof(RGBTRIPLE));
+                dataPtr->colors[k] = new RGBTRIPLE[dataPtr->fileInfo.biWidth];
+                dataPtr->fin->read((char*)dataPtr->colors[k], dataPtr->fileInfo.biWidth * sizeof(RGBTRIPLE));
+                dataPtr->fin->seekg(shiftBytes, ios::cur);
+                k++;
             }
         }
         else
@@ -86,20 +99,27 @@ Bmp24bitData* GetBmp24bitInfo(const string& filePath)
 
 
 
-void GetSymbolPositions(const size_t pixels, const size_t symbolCount, Position* pos)
+void GetSymbolPositions(/*const size_t maxPixelsCount, */const size_t pixels, const size_t symbolCount, Position* pos)
 {
     size_t leaf;
-    auto count = static_cast<size_t>(floor(static_cast<double>(pixels) / symbolCount));
-    if (count > 0)
+    size_t count(0);
+    if (pixels >= symbolCount)
     {
+        count = static_cast<size_t>(floor(static_cast<double>(pixels) / symbolCount));
+        //size_t k(0);
         for (size_t i = 0; i < symbolCount; i++)
+        {
             pos[i] = { i * count, count };
+            /*for (size_t p = 0; p < count; p++)
+                pos[i].idx.push_back(k);*/
+        }
+            
 
         leaf = pixels - count * symbolCount;
     }
     else
     {
-        auto idx = static_cast<size_t>(floor(static_cast<double>(symbolCount) / pixels));
+        auto idx = static_cast<size_t>(ceil(static_cast<double>(symbolCount) / pixels));
         for (size_t i = idx - 1; i < symbolCount; i += idx)
         {
             pos[i].len++;
@@ -107,7 +127,7 @@ void GetSymbolPositions(const size_t pixels, const size_t symbolCount, Position*
                 pos[k].pos++;
         }
 
-        leaf = symbolCount - idx * pixels;
+        leaf = pixels - symbolCount / idx;
     }
     
     if (leaf != 0)
@@ -123,7 +143,7 @@ void OutputBmp(const string& filePath, const Rect& output)
     Position* xPositions = new Position[output.Xmax - output.Xmin + 1];
     Position* yPositions = new Position[output.Ymax - output.Ymin + 1];
     GetSymbolPositions(data->fileInfo.biWidth, output.Xmax - output.Xmin + 1, xPositions);
-    GetSymbolPositions(data->fileInfo.biWidth, output.Ymax - output.Ymin + 1, yPositions);
+    GetSymbolPositions(data->fileInfo.biHeight, output.Ymax - output.Ymin + 1, yPositions);
 
     char** chars = new char*[output.Ymax - output.Ymin + 1];
     for (size_t y = output.Ymin; y <= output.Ymax; y++)
@@ -134,9 +154,9 @@ void OutputBmp(const string& filePath, const Rect& output)
         {
             auto xPos = xPositions[x];
             char ch(' ');
-            for (size_t h = yPos.pos; h < yPos.pos + yPos.len; h++)
+            for (size_t h = yPos.pos; h < (yPos.pos + yPos.len); h++)
             {
-                for (size_t w = xPos.pos; w < xPos.pos + xPos.len; w++)
+                for (size_t w = xPos.pos; w < (xPos.pos + xPos.len); w++)
                 {
                     auto color = data->colors[h][w];
                     if (color.rgbtBlue == 0 && color.rgbtGreen == 0 && color.rgbtRed == 0)
@@ -148,7 +168,6 @@ void OutputBmp(const string& filePath, const Rect& output)
             }
             print:
             cout << ch;
-            //chars[y][x] = ch;
         }
         cout << endl;
     }
@@ -156,13 +175,13 @@ void OutputBmp(const string& filePath, const Rect& output)
     delete data;
 }
 
-Rect GetOutputWindow(const size_t x, const size_t y, const size_t w, const size_t h)
+Rect GetOutputWindow(const int x, const int y, const int w, const int h)
 {
     HWND hwnd = FindWindowA("ConsoleWindowClass", NULL);
     ShowWindow(hwnd, 1);
     MoveWindow(hwnd, x, y, w, h, TRUE);
     CONSOLE_SCREEN_BUFFER_INFO info;
-    !GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
     return { info.srWindow.Left, info.srWindow.Top, info.srWindow.Right, info.srWindow.Bottom };
 }
 
@@ -170,4 +189,5 @@ int main()
 {
     auto output = GetOutputWindow(0, 0, 1024, 768);
     OutputBmp("1.bmp", output);
+    return 0;
 }
