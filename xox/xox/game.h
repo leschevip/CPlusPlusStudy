@@ -5,40 +5,15 @@
 
 using namespace std;
 
-enum class Progress
-{
-	IN_PROGRESS,
-	DRAW,
-	HUMAN_WON,
-	AI_WON
-};
-
-enum class Figure
-{
-	CROSS = 'X',
-	ZERO = '0',
-	EMPTY = ' '
-};
-
-struct Position
-{
-	size_t y{ 0 };
-	size_t x{ 0 };
-};
-
-struct Player
-{
-	string Name;
-	Figure Chip;
-};
-
 class Game
 {
 private:
-	vector<Player> players;
-
+	vector<Player> _players;
+	size_t _size;
+	char** _area;
 public:
+	const size_t MAX_PLAYERS_COUNT = 5;
+
 	Game();
-	void InitGame(const GameView& view);
-	void AddPlayer(const Player& player);
+	void InitGame(GameView& view);
 };

@@ -1,9 +1,12 @@
-#include <iostream>
-#include "input.h"
+#include "consoleView.h"
+#include "GameView.h"
+#include "game.h"
 
 
 int main()
 {
-	const size_t SIZE = input::InputNumber<size_t>("Game area size");
+	ConsoleView view;
+	Game g;
+	g.InitGame((GameView&)view);
 	return 0;
 }

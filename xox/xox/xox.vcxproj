@@ -139,11 +139,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="consoleView.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="gameview.h" />
     <ClInclude Include="input.h" />
+    <ClInclude Include="data.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="game.cpp" />
+    <ClCompile Include="consoleView.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
