@@ -17,6 +17,8 @@ namespace input
     bool stringCheck(const istream& in, const string& val);
 
     bool stringNotEmptyCheck(const istream& in, const string& val);
+       
+    int32_t GetRandomNum(int32_t min, int32_t max);
 
 #pragma region templates
 
@@ -41,7 +43,7 @@ namespace input
         do
         {
             cout << "Input " << varName << ": ";
-            // åñëè ââîäèòü äàííûå ÷åðåç ïðîáåë, òî îáðàáàòûâàåòñÿ ïåðâîå çíà÷åíèå äî ïðîáåëà, äàëüøå áóôåð âñå ðàâíî ÷èñòèòñÿ.
+            
             cin >> v;
 
             cin.clear();

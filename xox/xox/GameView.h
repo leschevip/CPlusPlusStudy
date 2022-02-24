@@ -5,10 +5,14 @@
 
 class GameView
 {
+protected:
+	Data* _data;
 public:
-	virtual void Print(string message) = 0;
-	virtual string GetPlayerName() = 0;
-	virtual char GetChip() = 0;
+	GameView(Data* const data) : _data(data) { }
+	virtual void PrintAll() = 0;
+	virtual Player* InputPlayerData() = 0;
 	virtual size_t GetAreaSize() = 0;
 	virtual size_t GetQuantityPlayers() = 0;
+	virtual bool MoveCursorChoice(OUT Position& v) = 0;
+	virtual void Congrats() = 0;
 };

@@ -5,8 +5,11 @@
 
 int main()
 {
-	ConsoleView view;
-	Game g;
-	g.InitGame((GameView&)view);
+	Data* data = new Data();
+	ConsoleView* view = new ConsoleView(data);
+	Game g((GameView*)view, data);
+	g.InitGame();
+	g.Progress();
+	g.DeInitGame();
 	return 0;
 }

@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <random>
+#include <chrono>
 #include "gameview.h"
 
 using namespace std;
@@ -8,12 +10,15 @@ using namespace std;
 class Game
 {
 private:
-	vector<Player> _players;
-	size_t _size;
-	char** _area;
+	Data* _data;
+	GameView* _view;
+	Position GetAiInput(const Player * const player);
+	Position NextFreePosition(const Position& current, const Position& v);
+	State GetGameState();
 public:
-	const size_t MAX_PLAYERS_COUNT = 5;
-
-	Game();
-	void InitGame(GameView& view);
+	Game(GameView* const view, Data* const data);
+	void InitGame();
+	void DeInitGame();
+	void PrintAll();
+	void Progress();
 };
