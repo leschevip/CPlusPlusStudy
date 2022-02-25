@@ -14,5 +14,4 @@ public:
 	virtual size_t GetAreaSize() = 0;
 	virtual size_t GetQuantityPlayers() = 0;
 	virtual bool MoveCursorChoice(OUT Position& v) = 0;
-	virtual void Congrats() = 0;
 };

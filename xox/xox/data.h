@@ -35,6 +35,12 @@ struct State
 	}
 };
 
+struct AiInfo
+{ 
+	Position pos; 
+	int32_t count; 
+};
+
 class Data
 {
 private:

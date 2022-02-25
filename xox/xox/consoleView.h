@@ -19,5 +19,4 @@ public:
 	size_t GetAreaSize() override;
 	size_t GetQuantityPlayers() override;
 	bool MoveCursorChoice(OUT Position& v) override;
-	void Congrats() override;
 };

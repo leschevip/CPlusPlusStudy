@@ -66,14 +66,12 @@ void Game::Progress()
 		_data->SetProgressState(GetGameState());
 	}
 	while (_data->IsProgress());
-	_view->Congrats();
+	_view->PrintAll();
 }
 
-Position Game::AnalizeVector(vector<Position> playerPositions, const Player* const player, function<char(Position, size_t)> valueGetter)
+AiInfo Game::AnalizeVector(vector<Position> playerPositions, const Player* const player, function<char(Position, size_t)> valueGetter)
 {
-	struct info { Position pos; int32_t count; };
-	vector<info> data;
-
+	vector<AiInfo> data;
 	for (auto pos : playerPositions)
 	{
 		int32_t index(-1);
@@ -115,18 +113,58 @@ Position Game::AnalizeVector(vector<Position> playerPositions, const Player* con
 
 	if (data.size() > 0)
 	{
-		info maxitem = data.at(0);
+		AiInfo maxitem = data.at(0);
 		for (auto item : data)
 		{
 			if (maxitem.count < item.count)
 				maxitem = item;
 		}
 
-		return maxitem.pos;
+		return maxitem;
 	}
 	else
 		return {-1, -1};
 
+}
+
+size_t Game::GetDiagCounts(const size_t shift, const Player* const player, function<char(size_t, size_t)> valueGetter)
+{
+	int32_t index(-1);
+	for (size_t idx = 0; idx < _data->Size(); idx++)
+	{
+		if (valueGetter((shift > 0 ? shift - idx : idx), idx) == player->Chip)
+		{
+			index = idx;
+			break;
+		}
+	}
+
+	if (index != -1)
+	{
+		bool isSkip(false);
+		for (size_t idx = 0; idx < _data->Size(); idx++)
+		{
+			auto chip = valueGetter((shift > 0 ? shift - idx : idx), idx);
+			if (chip != player->Chip && chip != _data->EMPTYCHAR)
+			{
+				isSkip = true;
+				break;
+			}
+		}
+
+		if (!isSkip)
+		{
+			size_t count(0);
+			for (size_t idx = 0; idx < _data->Size(); idx++)
+			{
+				if (valueGetter((shift > 0 ? shift - idx : idx), idx) == player->Chip)
+					count++;
+			}
+			return count;
+		}
+	}
+
+	return 0;
 }
 
 Position Game::GetAiInput(const Player* const player)
@@ -205,12 +243,40 @@ Position Game::GetAiInput(const Player* const player)
 
 	if (num > 0)
 	{
-		auto columnIndex = AnalizeVector(playerPositions, player, [&](Position p, size_t idx) { return area[idx][p.x]; }).x;
-		auto rowIndex = AnalizeVector(playerPositions, player, [&](Position p, size_t idx) { return area[p.y][idx]; }).y;
+		auto infoByColumn = AnalizeVector(playerPositions, player, [&](Position p, size_t idx) { return area[idx][p.x]; });
+		auto infoByRow = AnalizeVector(playerPositions, player, [&](Position p, size_t idx) { return area[p.y][idx]; });
+
+		int32_t columnIndex(-1), rowIndex(-1);
+		if (infoByColumn.count >= 0 && infoByRow.count >= 0)
+		{
+			if (infoByColumn.count > infoByRow.count)
+			{
+				columnIndex = infoByColumn.pos.x;
+			}
+			else
+			{
+				rowIndex = infoByRow.pos.y;
+			}
+		}
 		
 		vector<int32_t> indexes;
 		if (columnIndex == -1 && rowIndex == -1)
 		{
+			size_t diag1Count = GetDiagCounts(0, player, [&](size_t y, size_t x) { return area[y][x]; });
+			size_t diag2Count = GetDiagCounts(_data->Size() - 1, player, [&](size_t y, size_t x) { return area[y][x]; });
+			if (diag1Count > 0 || diag2Count > 0)
+			{
+				vector<int32_t> indexes;
+				size_t shift = diag1Count < diag2Count ? _data->Size() - 1 : 0;
+				for (size_t i = 0; i < _data->Size(); i++)
+					indexes.push_back(area[(shift > 0 ? shift - i : i)][i]);
+
+				int32_t idx = input::GetRandomNum(0, indexes.size() - 1);
+				return { idx, idx };
+			}
+			
+			
+
 			const size_t index = input::GetRandomNum(0, num - 1);
 			return positions[index];
 		}

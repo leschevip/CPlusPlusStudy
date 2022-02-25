@@ -10,7 +10,8 @@ void ConsoleView::PrintAll()
 	system("cls");
 
 	Position pos = _data->CurrentPosition();
-
+	auto state = _data->State();
+	
 	cout << "     ";
 	for (size_t x = 0; x < _data->Size(); x++)
 	{
@@ -25,7 +26,15 @@ void ConsoleView::PrintAll()
 
 		for (size_t x = 0; x < _data->Size(); x++)
 		{
-			char ch = pos.x == x && pos.y == y ? _data->ActivePlayer()->Chip : area[y][x];
+			char ch(0);
+			if (state.ProgressGame == Progress::IN_PROGRESS)
+			{
+				ch = pos.x == x && pos.y == y ? _data->ActivePlayer()->Chip : area[y][x];
+			}
+			else
+			{
+				ch = area[y][x];
+			}
 			cout << ch << " | ";
 		}
 		cout << endl;
@@ -38,7 +47,14 @@ void ConsoleView::PrintAll()
 		cout << p->Name << ": " << p->Chip << endl;
 	}
 
-	cout << "Now " << _data->ActivePlayer()->Name << " step." << endl;
+	if (state.ProgressGame == Progress::DRAW)
+	{
+		cout << "It's draw!";
+	}
+	else if (state.ProgressGame != Progress::IN_PROGRESS)
+	{
+		cout << "Win a" << (state.ProgressGame == Progress::HUMAN_WON ? " human " : " computer ") << state.Winner->Name;
+	}
 }
 
 Player* ConsoleView::InputPlayerData()
@@ -107,17 +123,4 @@ bool ConsoleView::MoveCursorChoice(OUT Position& v)
 	}
 	
 	return false;
-}
-
-void ConsoleView::Congrats()
-{
-	auto state = _data->State();
-	if (state.ProgressGame == Progress::DRAW)
-	{
-		cout << "It's draw!";
-	}
-	else
-	{
-		cout << "Win a" << (state.ProgressGame == Progress::HUMAN_WON ? " human " : " computer ") << state.Winner->Name;
-	}
 }
