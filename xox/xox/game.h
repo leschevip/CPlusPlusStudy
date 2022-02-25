@@ -15,10 +15,11 @@ private:
 	Position GetAiInput(const Player * const player);
 	Position NextFreePosition(const Position& current, const Position& v);
 	State GetGameState();
+	Position AnalizeVector(vector<Position> playerPositions, const Player* const player, function<char(Position, size_t)> valueGetter);
 public:
 	Game(GameView* const view, Data* const data);
 	void InitGame();
-	void DeInitGame();
+	~Game();
 	void PrintAll();
 	void Progress();
 };

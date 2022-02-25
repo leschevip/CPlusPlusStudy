@@ -10,6 +10,5 @@ int main()
 	Game g((GameView*)view, data);
 	g.InitGame();
 	g.Progress();
-	g.DeInitGame();
 	return 0;
 }

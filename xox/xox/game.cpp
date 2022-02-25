@@ -18,7 +18,7 @@ void Game::InitGame()
 	_data->SetActivePlayer(input::GetRandomNum(0, players->size() - 1));
 }
 
-void Game::DeInitGame()
+Game::~Game()
 {
 	delete _data;
 	_data = nullptr;
@@ -69,6 +69,66 @@ void Game::Progress()
 	_view->Congrats();
 }
 
+Position Game::AnalizeVector(vector<Position> playerPositions, const Player* const player, function<char(Position, size_t)> valueGetter)
+{
+	struct info { Position pos; int32_t count; };
+	vector<info> data;
+
+	for (auto pos : playerPositions)
+	{
+		int32_t index(-1);
+		for (size_t idx = 0; idx < _data->Size(); idx++)
+		{
+			if (valueGetter(pos, idx) != player->Chip)
+			{
+				index = idx;
+				break;
+			}
+		}
+
+		if (index != -1)
+		{
+			bool isSkip(false);
+			for (size_t idx = 0; idx < _data->Size(); idx++)
+			{
+				auto chip = valueGetter(pos, idx);
+				if (chip != player->Chip && chip != _data->EMPTYCHAR)
+				{
+					isSkip = true;
+					break;
+				}
+			}
+
+			if (!isSkip)
+			{
+				int32_t count(0);
+				for (size_t idx = 0; idx < _data->Size(); idx++)
+				{
+					if (valueGetter(pos, idx) == player->Chip)
+						count++;
+				}
+
+				data.push_back({ pos, count });
+			}
+		}
+	}
+
+	if (data.size() > 0)
+	{
+		info maxitem = data.at(0);
+		for (auto item : data)
+		{
+			if (maxitem.count < item.count)
+				maxitem = item;
+		}
+
+		return maxitem.pos;
+	}
+	else
+		return {-1, -1};
+
+}
+
 Position Game::GetAiInput(const Player* const player)
 {
 	auto area = _data->Area();
@@ -80,14 +140,20 @@ Position Game::GetAiInput(const Player* const player)
 		{
 			if (area[y][x] == _data->EMPTYCHAR)
 			{
-				area[y][x] = player->Chip;
-				auto state = GetGameState();
-				if (state.ProgressGame == Progress::AI_WON)
+				for (auto p : *_data->Players())
 				{
-					area[y][x] = _data->EMPTYCHAR;
-					return { y,x };
+					if (p->Chip != player->Chip)
+					{
+						area[y][x] = p->Chip;
+						auto state = GetGameState();
+						if (state.ProgressGame == Progress::AI_WON)
+						{
+							area[y][x] = _data->EMPTYCHAR;
+							return { y,x };
+						}
+						area[y][x] = _data->EMPTYCHAR;
+					}
 				}
-				area[y][x] = _data->EMPTYCHAR;
 			}
 		}
 	}
@@ -99,19 +165,26 @@ Position Game::GetAiInput(const Player* const player)
 		{
 			if (area[y][x] == _data->EMPTYCHAR)
 			{
-				area[y][x] = player->Chip;
-				auto state = GetGameState();
-				if (state.ProgressGame == Progress::HUMAN_WON)
+				for (auto p : *_data->Players())
 				{
-					area[y][x] = _data->EMPTYCHAR;
-					return { y,x };
+					if (p->Chip != player->Chip)
+					{
+						area[y][x] = p->Chip;
+						auto state = GetGameState();
+						if (state.ProgressGame == Progress::HUMAN_WON)
+						{
+							area[y][x] = _data->EMPTYCHAR;
+							return { y,x };
+						}
+						area[y][x] = _data->EMPTYCHAR;
+					}
 				}
-				area[y][x] = _data->EMPTYCHAR;
-			}
+			}	
 		}
 	}
 
 	vector<Position> positions;
+	vector<Position> playerPositions;
 	size_t num(0);
 	for (int32_t y = 0; y < _data->Size(); y++)
 	{
@@ -122,16 +195,46 @@ Position Game::GetAiInput(const Player* const player)
 				positions.push_back({ y,x });
 				num++;
 			}
+
+			if (area[y][x] == player->Chip)
+			{
+				playerPositions.push_back({ y,x });
+			}
 		}
 	}
 
 	if (num > 0)
 	{
-		const size_t index = input::GetRandomNum(0, num - 1);
-		return positions[index];
+		auto columnIndex = AnalizeVector(playerPositions, player, [&](Position p, size_t idx) { return area[idx][p.x]; }).x;
+		auto rowIndex = AnalizeVector(playerPositions, player, [&](Position p, size_t idx) { return area[p.y][idx]; }).y;
+		
+		vector<int32_t> indexes;
+		if (columnIndex == -1 && rowIndex == -1)
+		{
+			const size_t index = input::GetRandomNum(0, num - 1);
+			return positions[index];
+		}
+		else if (columnIndex >= 0)
+		{
+			for (size_t y = 0; y < _data->Size(); y++)
+			{
+				if (area[y][columnIndex] != player->Chip)
+					indexes.push_back(y);
+			}
+			return { indexes.at(input::GetRandomNum(0, indexes.size() - 1)), columnIndex };
+		}
+		else if (rowIndex >= 0)
+		{
+			for (size_t x = 0; x < _data->Size(); x++)
+			{
+				if (area[rowIndex][x] != player->Chip)
+					indexes.push_back(x);
+			}
+			return { rowIndex, indexes.at(input::GetRandomNum(0, indexes.size() - 1))};
+		}
 	}
 
-	throw;
+	return {0, 0};
 }
 
 Position Game::NextFreePosition(const Position& current, const Position& v)
@@ -152,7 +255,11 @@ Position Game::NextFreePosition(const Position& current, const Position& v)
 		while (area[next.y][next.x] != _data->EMPTYCHAR)
 		{
 			if (next.x > 0 && next.x < _data->Size())
+			{
 				next.x += sign;
+				if (next.x == _data->Size())
+					return current;
+			}
 			else
 				return current;
 		}
@@ -165,7 +272,11 @@ Position Game::NextFreePosition(const Position& current, const Position& v)
 		while (area[next.y][next.x] != _data->EMPTYCHAR)
 		{
 			if (next.y > 0 && next.y < _data->Size())
+			{
 				next.y += sign;
+				if (next.y == _data->Size())
+					return current;
+			}
 			else
 				return current;
 		}
