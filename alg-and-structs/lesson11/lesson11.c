@@ -169,6 +169,10 @@ char* encryptDecryptByPermutations(const char* message, int columns, char* type,
 	if (isDebug)
 		printf("encrypted: %s\n", newMessage);
 
+	for (int i = 0; i < r; i++)
+		free(m[i]);
+	free(m);
+
 	return newMessage;
 }
 
