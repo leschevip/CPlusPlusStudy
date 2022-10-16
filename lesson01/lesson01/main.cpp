@@ -7,13 +7,6 @@ using namespace std;
 
 int main()
 {
-	setlocale(LC_ALL, "Russian");
-	Person p1(L"Лещёв", L"Иван", nullopt);
-	Person p2(L"Лещёв", L"Иван", L"Павлович");
-
-	wcout << boolalpha << p1 << " < " << p2 << ": " << (p1 < p2) << endl;
-	wcout << boolalpha << p1 << " = " << p2 << ": " << (p1 == p2) << endl;
-
 	std::locale::global(std::locale("en_US.utf8"));
 	wifstream f;
 	f.imbue(locale("en_EN.utf8"));
@@ -37,13 +30,13 @@ int main()
 			wcout << get<0>(response);
 		wcout << endl;
 	};
-	print_phone_number(L"Лещёв");
-	print_phone_number(L"Левщенко");
-	print_phone_number(L"Лещёва");
+	print_phone_number(L"Р›РµС‰С‘РІ");
+	print_phone_number(L"Р›РµРІС‰РµРЅРєРѕ");
+	print_phone_number(L"Р›РµС‰С‘РІР°");
 	wcout << endl;
 	
 	cout << "----ChangePhoneNumber----" << endl;
-	book.ChangePhoneNumber(Person(L"Лещёв", L"Иван", L"Павлович"), PhoneNumber(7, 123, L"15344458", nullopt));
-	book.ChangePhoneNumber(Person(L"Третьяков", L"Иван", L"Павлович"), PhoneNumber(7, 123, L"15344458", nullopt));
+	book.ChangePhoneNumber(Person(L"Р›РµС‰С‘РІ", L"РРІР°РЅ", L"РџР°РІР»РѕРІРёС‡"), PhoneNumber(7, 123, L"15344458", nullopt));
+	book.ChangePhoneNumber(Person(L"РўСЂРµС‚СЊСЏРєРѕРІ", L"РРІР°РЅ", L"РџР°РІР»РѕРІРёС‡"), PhoneNumber(7, 123, L"15344458", nullopt));
 	wcout << book;
 }
