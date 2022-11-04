@@ -4,10 +4,11 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
-#include "Matrix.h"
+#include "Mtx.h"
+#include "MyIterator.h"
+#include "MyContainer.h"
 
 using namespace std;
-
 
 
 void Task1()
@@ -21,14 +22,32 @@ void Task1()
 
 void Task2()
 {
-	Matrix<int, 4> m;
+	cout << "Task2:" << endl;
+	Mtx<int, 4> m;
 	m.FillRandom(-100, 100);
 	cout << m << endl;
+
+	cout << m.Det() << endl;
+}
+
+void Task3()
+{
+	cout << "Task3:" << endl;
+	MyContainer<int> values(3);
+	values[0] = 1;
+	values[1] = 2;
+	values[2] = 3;
+	for (auto v : values)
+	{
+		cout << v << "  ";
+	}
+	cout << endl;
 }
 
 int main()
 {
 	Task1();
 	Task2();
+	Task3();
 	return 0;
 }
